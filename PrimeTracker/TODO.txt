@@ -1,0 +1,1 @@
+﻿Abilitiy to export to ThingsDB (app)
