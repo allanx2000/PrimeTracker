@@ -21,11 +21,18 @@ namespace PrimeTracker
     /// </summary>
     public partial class MainWindow : Window
     {
+        private MainWindowViewModel vm;
+
         public MainWindow()
         {
             InitializeComponent();
 
-            var browser = new PrimeBrowser();
+            this.vm = new MainWindowViewModel(this);
+            DataContext = vm;
         }
+
+
+
+        
     }
 }
