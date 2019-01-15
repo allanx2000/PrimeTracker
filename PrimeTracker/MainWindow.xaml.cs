@@ -1,4 +1,5 @@
 ﻿using PrimeTracker.Browsers;
+using PrimeTracker.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,27 +28,14 @@ namespace PrimeTracker
         {
             InitializeComponent();
 
-            //this.vm = new MainWindowViewModel(this);
-            //DataContext = vm;
-
-            var ctx = AppContext.InitializeAppContext("E:\\test.db");
-            ctx.allVideos.Add(new Models.Video()
-            {
-                 AmazonId = "1111",
-                  Created = DateTime.Now,
-                  Updated = DateTime.Now,
-                   Description = "tttt",
-                    Title = "ttttt",
-                     Type = Models.VideoType.Movie,
-                      Url = "asdf"
-            });
-           
-            ctx.SaveChanges();
-
+            vm = new MainWindowViewModel(this);
+            DataContext = vm;
         }
 
-
-
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            vm.CloseBrowser();
+        }
 
     }
 }

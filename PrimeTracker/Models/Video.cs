@@ -42,6 +42,20 @@ namespace PrimeTracker.Models
 
         public virtual ICollection<TagRecord> Tags { get; set; }
 
+        public Dictionary<TagTypes, TagRecord> TagMap
+        {
+            get
+            {
+                var dict = new Dictionary<TagTypes, TagRecord>();
+
+                foreach (var t in Tags)
+                {
+                    dict[t.Value] = t;
+                }
+
+                return dict;
+            }
+        }
     }
 
 }

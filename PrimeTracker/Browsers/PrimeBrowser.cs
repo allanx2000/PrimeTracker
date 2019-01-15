@@ -63,8 +63,11 @@ namespace PrimeTracker.Browsers
             //options.AddArgument("headless");
 
             driver = new ChromeDriver(chromeDriverService, options);
+        }
 
-            //Login();
+        internal void Quit()
+        {
+            driver.Quit();
         }
 
         private void Login()
@@ -154,6 +157,9 @@ namespace PrimeTracker.Browsers
                     {
                         string title = l.FindElement(By.TagName("img")).GetAttribute("alt");
                         string amazonId = ExtractId(link);
+
+                        if (type == VideoType.TvSeason)
+                            title += $" ({amazonId})";
 
                         videos[amazonId] = new Video() {
                             AmazonId = amazonId,

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
@@ -15,6 +17,16 @@ namespace PrimeTracker
         private ObservableCollection<Video> shows = new ObservableCollection<Video>();
         private CollectionViewSource cvsExpiredShows;
         private readonly PrimeBrowser browser;
+
+        public ICollection<Video> AllMovies
+        {
+            get { return movies; }
+        }
+
+        public ICollection<Video> AllShows
+        {
+            get { return shows; }
+        }
 
         public MainWindowViewModel(MainWindow mainWindow)
         {
@@ -34,7 +46,37 @@ namespace PrimeTracker
             cvsExpiredShows.SortDescriptions.Add(SortTitle);
             cvsExpiredShows.View.Filter = (x) => ((Video)x).ExpiringDate != null;
 
-            Refresh();
+            LoadFromContext();
+        }
+
+        internal void CloseBrowser()
+        {
+            if (browser != null)
+                browser.Quit();
+        }
+
+        private void LoadFromContext()
+        {
+            if (AppContext.Instance == null)
+            {
+                AppContext.InitializeAppContext("E:\\test.db");
+            }
+
+            AllMovies.Clear();
+            AllShows.Clear();
+
+            foreach (var v in AppContext.Instance.allVideos)
+            {
+                switch (v.Type)
+                {
+                    case VideoType.Movie:
+                        AllMovies.Add(v);
+                        break;
+                    case VideoType.TvSeason:
+                        AllShows.Add(v);
+                        break;
+                }
+            }
         }
 
         public ICollectionView ExpiredMovies
@@ -47,19 +89,67 @@ namespace PrimeTracker
             get { return cvsExpiredShows.View; }
         }
 
-        public void Refresh()
+        public void RefreshWatchListItems()
         {
-            movies.Clear();
-            
             foreach (var i in browser.GetWatchListVideos())
             {
-                movies.Add(i);
+                var existing = (from x in AppContext.Instance.allVideos
+                                where x.AmazonId == i.AmazonId
+                                select x).FirstOrDefault();
+
+                if (existing != null)
+                {
+                    SetValues(existing, i);
+                }
+                else
+                {
+                    SetValues(i);
+                    AppContext.Instance.allVideos.Add(i);
+                }
             }
 
-            shows.Clear();
             foreach (var i in browser.GetWatchListVideos(VideoType.TvSeason))
             {
-                shows.Add(i);
+                var existing = (from x in AppContext.Instance.allVideos
+                                where x.AmazonId == i.AmazonId
+                                select x).FirstOrDefault();
+
+                if (existing != null)
+                {
+                    SetValues(existing, i);
+                }
+                else
+                {
+                    SetValues(i);
+                    AppContext.Instance.allVideos.Add(i);
+                }
+            }
+
+            LoadFromContext();
+        }
+
+        private static void SetValues(Video originai, Video updated = null)
+        {
+            if (updated == null)
+            {
+                originai.Created = originai.Updated = DateTime.Now;
+
+                originai.Tags = new List<TagRecord>(); //Is this null?
+                originai.Tags.Add(TagRecord.Create(TagTypes.WatchList));
+
+                if (originai.ExpiringDate != null)
+                    originai.Tags.Add(TagRecord.Create(TagTypes.Expired));
+            }
+            else
+            {
+                originai.Updated = DateTime.Now;
+
+                var tags = originai.TagMap;
+
+                if (originai.ExpiringDate != null && tags.ContainsKey(TagTypes.Expired))
+                {
+                    originai.Tags.Add(TagRecord.Create(TagTypes.Expired));
+                }
             }
         }
     }

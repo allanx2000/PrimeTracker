@@ -1,4 +1,5 @@
 ﻿using PrimeTracker.Models;
+using SQLite.CodeFirst;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -62,8 +63,8 @@ namespace PrimeTracker
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
-            base.OnModelCreating(modelBuilder);
+            var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<AppContext>(modelBuilder);
+            Database.SetInitializer(sqliteConnectionInitializer);
         }
     }
 }

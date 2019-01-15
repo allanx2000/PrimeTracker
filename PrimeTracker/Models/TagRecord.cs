@@ -18,5 +18,16 @@ namespace PrimeTracker.Models
         public DateTime Added { get; set; }
 
         public Video Parent { get; set; }
+
+        internal static TagRecord Create(TagTypes value)
+        {
+            TagRecord tr = new TagRecord()
+            {
+                Added = DateTime.Now,
+                Value = value
+            };
+
+            return tr;
+        }
     }
 }
