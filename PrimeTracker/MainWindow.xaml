@@ -6,20 +6,53 @@
         xmlns:local="clr-namespace:PrimeTracker"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Closing="Window_Closing">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
 
-        <GroupBox Header="Movies">
-            <ListBox ItemsSource="{Binding ExpiredMovies}" DisplayMemberPath="Title">
-            </ListBox>
-        </GroupBox>
+    <Window.Resources>
+        <DataTemplate x:Key="VideoTemplate">
+            <Label Foreground="{Binding TitleColor}" FontWeight="Bold">
+                <TextBlock Text="{Binding Title}"/>
+            </Label>
+        </DataTemplate>
+    </Window.Resources>
 
-        <GroupBox Grid.Row="1" Header="Shows">
-            <ListBox ItemsSource="{Binding ExpiredShows}" DisplayMemberPath="Title">
-            </ListBox>
+    <DockPanel LastChildFill="True">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Settings" Command="{Binding ShowSettingsCommand}"/>
+        </Menu>
+        <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <GroupBox Header="My Watchlist" Grid.Column="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <GroupBox Header="Movies">
+                    <ListBox ItemsSource="{Binding Movies}" MouseDoubleClick="OpenAmazonUrl"
+                             ItemTemplate="{StaticResource VideoTemplate}">
+                    </ListBox>
+                </GroupBox>
+
+                <GroupBox Grid.Row="1" Header="Shows">
+                    <ListBox ItemsSource="{Binding Shows}" MouseDoubleClick="OpenAmazonUrl" 
+                             ItemTemplate="{StaticResource VideoTemplate}">
+                    </ListBox>
+                </GroupBox>
+
+                <StackPanel HorizontalAlignment="Center" Grid.Row="2" Orientation="Horizontal">
+                    <CheckBox IsChecked="{Binding ExpiredOnly}">Expired Only</CheckBox>
+                    <Button Command="{Binding RefreshWatchlistCommand}">Refresh</Button>
+                </StackPanel>
+            </Grid>
+
+
         </GroupBox>
     </Grid>
+    </DockPanel>
 </Window>

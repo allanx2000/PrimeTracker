@@ -2,6 +2,7 @@
 using PrimeTracker.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,8 +35,20 @@ namespace PrimeTracker
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            vm.CloseBrowser();
+            //vm.CloseBrowser();
         }
 
+        private void OpenAmazonUrl(object sender, MouseButtonEventArgs e)
+        {
+            ListBox lb = sender as ListBox;
+
+            if (lb != null)
+            {
+                Video video = lb.SelectedItem as Video;
+
+                if (video != null && !string.IsNullOrEmpty(video.Url))
+                    Process.Start(video.Url);
+            }
+        }
     }
 }

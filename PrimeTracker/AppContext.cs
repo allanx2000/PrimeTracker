@@ -29,6 +29,11 @@ namespace PrimeTracker
     {
         private static AppContext instance;
 
+        public static Properties.Settings Settings
+        {
+            get { return Properties.Settings.Default; }
+        }
+
         public static AppContext InitializeAppContext(string dataFile)
         {
             instance = new AppContext(dataFile);

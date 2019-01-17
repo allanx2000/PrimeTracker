@@ -22,5 +22,17 @@ namespace PrimeTracker.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool HideChrome {
+            get {
+                return ((bool)(this["HideChrome"]));
+            }
+            set {
+                this["HideChrome"] = value;
+            }
+        }
     }
 }

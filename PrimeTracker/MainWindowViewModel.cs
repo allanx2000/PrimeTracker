@@ -6,27 +6,16 @@ using System.ComponentModel;
 using System.Windows.Data;
 using PrimeTracker.Browsers;
 using PrimeTracker.Models;
+using Innouvous.Utils.MVVM;
+using System.Windows.Input;
 
 namespace PrimeTracker
 {
     internal class MainWindowViewModel : Innouvous.Utils.Merged45.MVVM45.ViewModel
     {
         private MainWindow mainWindow;
-        private CollectionViewSource cvsExpiredMovies;
-        private ObservableCollection<Video> movies = new ObservableCollection<Video>();
-        private ObservableCollection<Video> shows = new ObservableCollection<Video>();
-        private CollectionViewSource cvsExpiredShows;
         private readonly PrimeBrowser browser;
 
-        public ICollection<Video> AllMovies
-        {
-            get { return movies; }
-        }
-
-        public ICollection<Video> AllShows
-        {
-            get { return shows; }
-        }
 
         public MainWindowViewModel(MainWindow mainWindow)
         {
@@ -34,19 +23,62 @@ namespace PrimeTracker
 
             this.mainWindow = mainWindow;
 
+            InitializeWatchlist();
+        }
+
+
+        #region Watchlist
+
+        private CollectionViewSource cvsMovies;
+        private ObservableCollection<Video> movies = new ObservableCollection<Video>();
+        private ObservableCollection<Video> shows = new ObservableCollection<Video>();
+        private CollectionViewSource cvsShows;
+
+        private void InitializeWatchlist()
+        {
             SortDescription SortTitle = new SortDescription("Title", ListSortDirection.Ascending);
 
-            cvsExpiredMovies = new CollectionViewSource();
-            cvsExpiredMovies.Source = movies;
-            cvsExpiredMovies.SortDescriptions.Add(SortTitle);
-            cvsExpiredMovies.View.Filter = (x) => ((Video)x).ExpiringDate != null;
+            cvsMovies = new CollectionViewSource
+            {
+                Source = movies
+            };
+            cvsMovies.SortDescriptions.Add(SortTitle);
+            cvsMovies.View.Filter = FilterVideos;
 
-            cvsExpiredShows = new CollectionViewSource();
-            cvsExpiredShows.Source = shows;
-            cvsExpiredShows.SortDescriptions.Add(SortTitle);
-            cvsExpiredShows.View.Filter = (x) => ((Video)x).ExpiringDate != null;
+            cvsShows = new CollectionViewSource
+            {
+                Source = shows
+            };
+
+            cvsShows.SortDescriptions.Add(SortTitle);
+            cvsShows.View.Filter = FilterVideos;
 
             LoadFromContext();
+        }
+
+        /// <summary>
+        /// If true, show the video
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        private bool FilterVideos(object obj)
+        {
+            if (ExpiredOnly)
+                return ((Video)obj).ExpiringDate != null;
+            else
+                return true;
+        }
+
+        public bool ExpiredOnly
+        {
+            get { return Get<bool>(); }
+            set
+            {
+                Set(value);
+                RaisePropertyChanged();
+                cvsShows.View.Refresh();
+                cvsMovies.View.Refresh();
+            }
         }
 
         internal void CloseBrowser()
@@ -55,6 +87,8 @@ namespace PrimeTracker
                 browser.Quit();
         }
 
+
+        //TODO: Refactor out and use Settings
         private void LoadFromContext()
         {
             if (AppContext.Instance == null)
@@ -62,34 +96,48 @@ namespace PrimeTracker
                 AppContext.InitializeAppContext("E:\\test.db");
             }
 
-            AllMovies.Clear();
-            AllShows.Clear();
+            LoadWatchlist();
+        }
 
-            foreach (var v in AppContext.Instance.allVideos)
+        private void LoadWatchlist()
+        {
+            shows.Clear();
+            movies.Clear();
+
+            foreach (var tag in AppContext.Instance.allTags.Where(t => t.Value == TagTypes.WatchList))
             {
-                switch (v.Type)
+
+                switch (tag.Parent.Type)
                 {
                     case VideoType.Movie:
-                        AllMovies.Add(v);
+                        movies.Add(tag.Parent);
                         break;
                     case VideoType.TvSeason:
-                        AllShows.Add(v);
+                        shows.Add(tag.Parent);
                         break;
                 }
             }
         }
 
-        public ICollectionView ExpiredMovies
+        public ICollectionView Movies
         {
-            get { return cvsExpiredMovies.View; }
+            get { return cvsMovies.View; }
         }
 
-        public ICollectionView ExpiredShows
+        public ICollectionView Shows
         {
-            get { return cvsExpiredShows.View; }
+            get { return cvsShows.View; }
         }
 
-        public void RefreshWatchListItems()
+        public ICommand RefreshWatchlistCommand
+        {
+            get
+            {
+                return new CommandHelper(RefreshWatchlistItems);
+            }
+        }
+
+        public void RefreshWatchlistItems()
         {
             foreach (var i in browser.GetWatchListVideos())
             {
@@ -127,6 +175,8 @@ namespace PrimeTracker
 
             LoadFromContext();
         }
+
+        #endregion
 
         private static void SetValues(Video originai, Video updated = null)
         {

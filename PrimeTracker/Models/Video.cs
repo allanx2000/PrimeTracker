@@ -5,12 +5,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace PrimeTracker.Models
 {
     [Table("videos")]
     public class Video
     {
+        
+        public SolidColorBrush TitleColor
+        {
+            get { return ExpiringDate == null ? ColorBrushes.Black : ColorBrushes.LightGray; }
+        }
+
+
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 

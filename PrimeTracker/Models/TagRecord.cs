@@ -17,7 +17,7 @@ namespace PrimeTracker.Models
         [Required]
         public DateTime Added { get; set; }
 
-        public Video Parent { get; set; }
+        public virtual Video Parent { get; set; }
 
         internal static TagRecord Create(TagTypes value)
         {
