@@ -69,6 +69,8 @@ namespace PrimeTracker
             get { return new CommandHelper(SaveSettings); }
         }
 
+        public bool Changed { get; private set; }
+
         private void SaveSettings()
         {
             try
@@ -79,8 +81,12 @@ namespace PrimeTracker
                 settings.DbPath = DbPath;
                 settings.Username = Username;
                 settings.Password = settingsWindow.PasswordBox.Password;
+                settings.HideChrome = HideBrowser;
 
                 settings.Save();
+
+                Changed = true;
+
                 settingsWindow.Close();
             }
             catch (Exception e)

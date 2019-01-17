@@ -77,7 +77,18 @@ namespace PrimeTracker.Browsers
             driver.Navigate().GoToUrl(AmazonBaseUrl);
 
             try
-            { 
+            {
+                try
+                {
+                    driver.FindElementByLinkText("Start here.");
+                }
+                catch (Exception e)
+                {
+                    LoggedIn = true;
+                    return;
+                }
+
+                //TODO: Need another check for already loogined in
                 var toggleButton = driver.FindElementById("nav-signin-tooltip");
                 var link = toggleButton.FindElement(By.TagName("a"));
                 link.Click();
@@ -125,7 +136,7 @@ namespace PrimeTracker.Browsers
             /*
              * Check last checked date
              * Check recently Added
-             */ 
+             */
             throw new NotImplementedException();
         }
 
@@ -143,7 +154,7 @@ namespace PrimeTracker.Browsers
             //All
             int ctr = 1;
 
-            
+
             while (true)
             {
                 bool added = false;
@@ -162,7 +173,8 @@ namespace PrimeTracker.Browsers
                         if (type == VideoType.TvSeason)
                             title += $" ({amazonId})";
 
-                        videos[amazonId] = new Video() {
+                        videos[amazonId] = new Video()
+                        {
                             AmazonId = amazonId,
                             Title = title,
                             Type = type,
@@ -232,7 +244,7 @@ namespace PrimeTracker.Browsers
             switch (type)
             {
                 case VideoType.TvSeason:
-                    basePath += "gp/video/watchlist/tv/" + (isPrime? "prime/" :"") +  "ref=atv_wtlp_tv";
+                    basePath += "gp/video/watchlist/tv/" + (isPrime ? "prime/" : "") + "ref=atv_wtlp_tv";
                     break;
                 case VideoType.Movie:
                     basePath += "gp/video/watchlist/movie/" + (isPrime ? "prime/" : "") + "ref=atv_wtlp_mv";

@@ -58,7 +58,8 @@ namespace PrimeTracker
 
         internal void Reload()
         {
-            vm.CloseBrowser();
+            if (vm != null)
+                vm.CloseBrowser();
 
             vm = new MainWindowViewModel(this);
             DataContext = vm;

@@ -29,6 +29,6 @@ namespace PrimeTracker
             DataContext = vm;
         }
 
-        public bool Changed { get; internal set; }
+        public bool Changed { get { return vm.Changed; } }
     }
 }
