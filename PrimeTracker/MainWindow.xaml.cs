@@ -27,15 +27,20 @@ namespace PrimeTracker
 
         public MainWindow()
         {
+            while (string.IsNullOrEmpty(AppContext.Settings.DbPath))
+            {
+                var dlg = new SettingsWindow();
+                dlg.ShowDialog();
+            }
+            
             InitializeComponent();
 
-            vm = new MainWindowViewModel(this);
-            DataContext = vm;
+            Reload();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            //vm.CloseBrowser();
+            vm.CloseBrowser();
         }
 
         private void OpenAmazonUrl(object sender, MouseButtonEventArgs e)
@@ -49,6 +54,14 @@ namespace PrimeTracker
                 if (video != null && !string.IsNullOrEmpty(video.Url))
                     Process.Start(video.Url);
             }
+        }
+
+        internal void Reload()
+        {
+            vm.CloseBrowser();
+
+            vm = new MainWindowViewModel(this);
+            DataContext = vm;
         }
     }
 }

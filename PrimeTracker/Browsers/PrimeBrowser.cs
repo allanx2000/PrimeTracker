@@ -60,7 +60,8 @@ namespace PrimeTracker.Browsers
                 UnhandledPromptBehavior = UnhandledPromptBehavior.Ignore,
             };
 
-            //options.AddArgument("headless");
+            if (AppContext.Settings.HideChrome)
+                options.AddArgument("headless");
 
             driver = new ChromeDriver(chromeDriverService, options);
         }
@@ -95,11 +96,11 @@ namespace PrimeTracker.Browsers
                     {
                         case "email":
                             input.Click();
-                            input.SendKeys("allan.xiao@gmail.com");
+                            input.SendKeys(AppContext.Settings.Username);
                             break;
                         case "password":
                             input.Click();
-                            input.SendKeys("netsurfer@1");
+                            input.SendKeys(AppContext.Settings.Password);
                             break;
                         case "rememberMe":
                             input.Click();

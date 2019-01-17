@@ -8,23 +8,44 @@ using PrimeTracker.Browsers;
 using PrimeTracker.Models;
 using Innouvous.Utils.MVVM;
 using System.Windows.Input;
+using Innouvous.Utils;
 
 namespace PrimeTracker
 {
     internal class MainWindowViewModel : Innouvous.Utils.Merged45.MVVM45.ViewModel
     {
         private MainWindow mainWindow;
-        private readonly PrimeBrowser browser;
+        private PrimeBrowser browser;
 
+        private PrimeBrowser Browser
+        {
+            get
+            {
+                if (browser == null)
+                    browser = new PrimeBrowser();
+
+                return browser;
+            }
+        }
 
         public MainWindowViewModel(MainWindow mainWindow)
         {
-            browser = new PrimeBrowser();
-
             this.mainWindow = mainWindow;
 
             InitializeWatchlist();
+
+            LoadFromContext();
         }
+
+
+        //TODO: Refactor out and use Settings
+        private void LoadFromContext()
+        {
+            AppContext.InitializeAppContext(AppContext.Settings.DbPath);
+         
+            LoadWatchlist();
+        }
+
 
 
         #region Watchlist
@@ -52,8 +73,6 @@ namespace PrimeTracker
 
             cvsShows.SortDescriptions.Add(SortTitle);
             cvsShows.View.Filter = FilterVideos;
-
-            LoadFromContext();
         }
 
         /// <summary>
@@ -85,18 +104,6 @@ namespace PrimeTracker
         {
             if (browser != null)
                 browser.Quit();
-        }
-
-
-        //TODO: Refactor out and use Settings
-        private void LoadFromContext()
-        {
-            if (AppContext.Instance == null)
-            {
-                AppContext.InitializeAppContext("E:\\test.db");
-            }
-
-            LoadWatchlist();
         }
 
         private void LoadWatchlist()
@@ -139,7 +146,7 @@ namespace PrimeTracker
 
         public void RefreshWatchlistItems()
         {
-            foreach (var i in browser.GetWatchListVideos())
+            foreach (var i in Browser.GetWatchListVideos())
             {
                 var existing = (from x in AppContext.Instance.allVideos
                                 where x.AmazonId == i.AmazonId
@@ -156,7 +163,7 @@ namespace PrimeTracker
                 }
             }
 
-            foreach (var i in browser.GetWatchListVideos(VideoType.TvSeason))
+            foreach (var i in Browser.GetWatchListVideos(VideoType.TvSeason))
             {
                 var existing = (from x in AppContext.Instance.allVideos
                                 where x.AmazonId == i.AmazonId
@@ -177,6 +184,26 @@ namespace PrimeTracker
         }
 
         #endregion
+
+        public ICommand ShowSettingsCommand
+        {
+            get
+            {
+                return new CommandHelper(ShowSettings);
+            }
+        }
+
+        private void ShowSettings()
+        {
+            var dlg = new SettingsWindow();
+            dlg.Owner = mainWindow;
+            dlg.ShowDialog();
+
+            if (dlg.Changed)
+            {
+                mainWindow.Reload();
+            }
+        }
 
         private static void SetValues(Video originai, Video updated = null)
         {
