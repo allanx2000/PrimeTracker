@@ -35,6 +35,8 @@ namespace PrimeTracker
             InitializeWatchlist();
 
             LoadFromContext();
+
+            Browser.GetRecentlyAddedVideos();
         }
 
 
