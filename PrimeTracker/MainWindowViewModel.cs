@@ -36,7 +36,42 @@ namespace PrimeTracker
 
             LoadFromContext();
 
-            Browser.GetRecentlyAddedVideos();
+            var list = Browser.GetRecentlyAddedVideos();
+
+            List<Video> added = new List<Video>();
+            List<Video> duplicates = new List<Video>();
+
+            foreach (Video v in list)
+            {
+                var existing = AppContext.Instance.allVideos.Where(x => x.AmazonId == v.AmazonId).FirstOrDefault();
+
+                if (existing == null)
+                {
+                    v.Created = v.Updated = DateTime.Now;
+                    v.Tags = new List<TagRecord>();
+                    v.Tags.Add(new TagRecord() { Added = DateTime.Now, Value = TagTypes.New });
+
+                    if ((from i in added
+                         where i.AmazonId == v.AmazonId || i.Title == v.Title
+                         select i).FirstOrDefault() == null)
+                    {
+                        AppContext.Instance.allVideos.Add(v);
+                        added.Add(v);
+                    }
+                    else
+                    {
+                        duplicates.Add(v);
+                    }
+                }
+                else
+                {
+                    existing.Updated = DateTime.Now;
+                    //Remove New after X days
+                }
+            }
+
+            AppContext.Instance.SaveChanges();
+
         }
 
 

@@ -38,7 +38,7 @@ namespace PrimeTracker.Browsers
 
         public bool LoggedIn { get; private set; }
 
-     
+
         public PrimeBrowser()
         {
             LoadBrowser();
@@ -162,19 +162,75 @@ namespace PrimeTracker.Browsers
             FindAndClickSpan("2000 - 2009");
             FindAndGotoLink("High Definition [HD]");
 
-            var videos = ScrapeResults();
+            var videos = ScrapeResults(VideoType.Movie);
 
             return videos;
         }
 
-        private List<Video> ScrapeResults()
+        private List<Video> ScrapeResults(VideoType type)
         {
             var videos = new List<Video>();
 
+            try
+            {
+                ParseVideosV1(videos, type);
+            }
+            catch (Exception e)
+            {
+                ParseVideosV2(videos, type);                
+            }
+
+
+            return videos;
+        }
+
+        private void ParseVideosV2(List<Video> videos, VideoType type)
+        {
+            while (true)
+            {
+                var resultList = driver.FindElementByClassName("s-result-list");
+                var links = resultList.FindElements(By.XPath(".//h5/a"));
+
+                foreach (var a in links)
+                {
+                    string link = a.GetAttribute("href");
+
+                    if (link.Contains("/dp/"))
+                    {
+                        
+                        string id = ExtractAmazonIdFromLink(link);
+                        string title = a.Text.Trim();
+
+                        Video video = new Video()
+                        {
+                            AmazonId = id,
+                            Title = title,
+                            Type = type,
+                            Url = link
+                        };
+
+                        videos.Add(video);
+                    }
+                }
+
+                try
+                {
+                    var pagination = driver.FindElementByClassName("a-pagination");
+                    var next = pagination.FindElement(By.PartialLinkText("Next"));
+                    driver.Navigate().GoToUrl(next.GetAttribute("href"));
+                }
+                catch (Exception e)
+                {
+                    return;
+                }
+            }
+        }
+
+        private void ParseVideosV1(List<Video> videos, VideoType type)
+        {
             do
             {
                 var resultCol = driver.FindElementById("resultsCol");
-
                 var items = resultCol.FindElements(By.ClassName("s-item-container"));
 
                 foreach (var item in items)
@@ -187,14 +243,14 @@ namespace PrimeTracker.Browsers
                         string link = a.GetAttribute("href");
                         //string id =
 
-                        int start = link.IndexOf("dp/") + 3;
-                        int end = link.IndexOf("/", start + 1);
-                        string id = link.Substring(start, end - start);
+                        string id = ExtractAmazonIdFromLink(link);
 
                         Video video = new Video()
                         {
                             AmazonId = id,
-                            Title = title
+                            Title = title,
+                            Type = type,
+                            Url = link
                         };
 
                         videos.Add(video);
@@ -208,15 +264,23 @@ namespace PrimeTracker.Browsers
                 try
                 {
                     var pgNext = driver.FindElementById("pagnNextLink");
+                    driver.Navigate().GoToUrl(pgNext.GetAttribute("href"));
+                    //pgNext.Click();
                 }
                 catch (Exception e)
                 {
                     //Last Page?
-                    break;
+                    return;
                 }
             } while (true);
+        }
 
-            return videos;
+        private static string ExtractAmazonIdFromLink(string link)
+        {
+            int start = link.IndexOf("dp/") + 3;
+            int end = link.IndexOf("/", start + 1);
+            string id = link.Substring(start, end - start);
+            return id;
         }
 
         private void FindAndClickSpan(string text)

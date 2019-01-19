@@ -64,6 +64,11 @@ namespace PrimeTracker.Models
                 return dict;
             }
         }
+
+        public override string ToString()
+        {
+            return Title + " (" + AmazonId + ")";
+        }
     }
 
 }

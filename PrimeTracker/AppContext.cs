@@ -6,6 +6,7 @@ using System.Data.Entity;
 using System.Data.Entity.Core.Common;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration.Conventions;
+using System.Data.Entity.Validation;
 using System.Data.SQLite;
 using System.Data.SQLite.EF6;
 using System.Linq;
@@ -45,12 +46,55 @@ namespace PrimeTracker
             get { return instance; }
         }
 
+        public override int SaveChanges()
+        {
+            try
+            {
+                return base.SaveChanges();
+            }
+            catch (DbEntityValidationException e)
+            {
+                foreach (DbEntityValidationResult item in e.EntityValidationErrors)
+                {
+                    // Get entry
+                    DbEntityEntry entry = item.Entry;
+                    string entityTypeName = entry.Entity.GetType().Name;
+
+                    // Display or log error messages
+
+                    foreach (DbValidationError subItem in item.ValidationErrors)
+                    {
+                        string message = string.Format("Error '{0}' occurred in {1} at {2}",
+                                 subItem.ErrorMessage, entityTypeName, subItem.PropertyName);
+                        Console.WriteLine(message);
+                    }
+
+                    // Rollback changes
+                    switch (entry.State)
+                    {
+                        case EntityState.Added:
+                            entry.State = EntityState.Detached;
+                            break;
+                        case EntityState.Modified:
+                            entry.CurrentValues.SetValues(entry.OriginalValues);
+                            entry.State = EntityState.Unchanged;
+                            break;
+                        case EntityState.Deleted:
+                            entry.State = EntityState.Unchanged;
+                            break;
+                    }
+                }
+
+                throw;
+            }
+        }
+
         public DbSet<TagRecord> allTags { get; set; }
         public DbSet<TvSeries> tvSeries { get; set; }
         public DbSet<Video> allVideos { get; set; }
 
         private string dataFile;
-        
+
         private AppContext(string dataFile) : base(CreateConnection(dataFile), true)
         {
             this.dataFile = dataFile;
@@ -60,9 +104,11 @@ namespace PrimeTracker
         {
             return new SQLiteConnection()
             {
-                ConnectionString = new SQLiteConnectionStringBuilder() {
+                ConnectionString = new SQLiteConnectionStringBuilder()
+                {
                     DataSource = dataFile,
-                    ForeignKeys = true }.ConnectionString
+                    ForeignKeys = true
+                }.ConnectionString
             };
         }
 
