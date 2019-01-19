@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,7 +12,7 @@ using PrimeTracker.Models;
 
 namespace PrimeTracker.Browsers
 {
-    public class PrimeBrowser : IBrowser
+    public partial class PrimeBrowser : IBrowser
     {
         private const string AmazonBaseUrl = "https://www.amazon.com/";
         private readonly string GP_VIDEO_DETAILS = "/gp/video/detail/";
@@ -39,15 +38,13 @@ namespace PrimeTracker.Browsers
 
         public bool LoggedIn { get; private set; }
 
-        public const int RetryTimeMS = 1000;
-
+     
         public PrimeBrowser()
         {
             LoadBrowser();
         }
 
         private JsonSerializer jser = new JsonSerializer();
-        private const int MaxAttempts = 5;
         private const string LeftNavContainer = "leftNavContainer";
 
         private void LoadBrowser()
@@ -132,17 +129,24 @@ namespace PrimeTracker.Browsers
             }
         }
 
+        //TODO: Turn into Enum
+        public const string Days_30 = "Last 30 Days";
+        public const string Days_60 = "Last 60 Days";
+        public const string Days_90 = "Last 90 Days";
+
+
         public List<Video> GetRecentlyAddedVideos()
+        {
+            return GetRecentlyAddedVideos(Days_30);
+        }
+
+        public List<Video> GetRecentlyAddedVideos(string days)
         {
             /*
              * Check last checked date
              * Check recently Added
              * 
              * * Navigate https://www.amazon.com/
-* -Included in Prime
-* -TV/Movie
-* -Last 30 Days
-
              */
 
             if (!LoggedIn)
@@ -152,86 +156,100 @@ namespace PrimeTracker.Browsers
 
             FindAndGotoLink("Movies");
             FindAndGotoLink("Included with Prime");
-            FindAndGotoLink("Last 30 Days");
-            FindRatingLink("3 Stars & Up");
+            FindAndGotoLink(days);
+            FindRatingLink(4);
             FindAndClickSpan("2010 & Newer");
             FindAndClickSpan("2000 - 2009");
             FindAndGotoLink("High Definition [HD]");
-            
+
+            var videos = ScrapeResults();
+
+            return videos;
+        }
+
+        private List<Video> ScrapeResults()
+        {
             var videos = new List<Video>();
+
+            do
+            {
+                var resultCol = driver.FindElementById("resultsCol");
+
+                var items = resultCol.FindElements(By.ClassName("s-item-container"));
+
+                foreach (var item in items)
+                {
+                    try
+                    {
+                        var a = item.FindElement(By.ClassName("s-access-detail-page"));
+
+                        string title = a.GetAttribute("title");
+                        string link = a.GetAttribute("href");
+                        //string id =
+
+                        int start = link.IndexOf("dp/") + 3;
+                        int end = link.IndexOf("/", start + 1);
+                        string id = link.Substring(start, end - start);
+
+                        Video video = new Video()
+                        {
+                            AmazonId = id,
+                            Title = title
+                        };
+
+                        videos.Add(video);
+                    }
+                    catch (Exception e)
+                    {
+                        //Not a link
+                    }
+                }
+
+                try
+                {
+                    var pgNext = driver.FindElementById("pagnNextLink");
+                }
+                catch (Exception e)
+                {
+                    //Last Page?
+                    break;
+                }
+            } while (true);
 
             return videos;
         }
 
         private void FindAndClickSpan(string text)
         {
-            int attempt = 0;
-
-            while (attempt < MaxAttempts)
+            SafeExecutor.ExecuteAction(() =>
             {
-                try
-                {
-                    var ln = GetLeftNav(driver);
-                    var el = ln.FindElement(By.XPath($".//span[text()='{text}']"));
+                var ln = GetLeftNav(driver);
+                var el = ln.FindElement(By.XPath($".//span[text()='{text}']"));
 
-                    el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
-                    return;
-                }
-                catch (Exception e)
-                {
-                    attempt++;
-                    Thread.Sleep(RetryTimeMS);
-                }
-            }
+                el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
 
-            throw new Exception("Cannot find span: " + text);
-
-
+            }, "Cannot find span: " + text);
         }
 
-        private void FindRatingLink(string v)
+        private void FindRatingLink(int minRating)
         {
-            int attempt = 0;
-
-            while (attempt < MaxAttempts)
+            SafeExecutor.ExecuteAction(() =>
             {
-                try
-                {
-                    var ln = GetLeftNav(driver);
-                    var el = ln.FindElement(By.ClassName("a-star-medium-3"));
+                var ln = GetLeftNav(driver);
+                var el = ln.FindElement(By.ClassName("a-star-medium-" + minRating));
 
-                    el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
-                    return;
-                }
-                catch (Exception e)
-                {
-                    attempt++;
-                    Thread.Sleep(RetryTimeMS);
-                }
-            }
+                el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
 
-            throw new Exception("Cannot find Rating Button");
+            }, "Cannot find Rating Button");
         }
 
         private void FindAndGotoLink(string linkText)
         {
-            string link = null;
-            int attempt = 0;
-
-            while (attempt < MaxAttempts)
+            string link = SafeExecutor.ExecuteFunc(() =>
             {
-                try
-                {
-                    var ln = GetLeftNav(driver);
-                    link = ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
-                    break;
-                }
-                catch (Exception e)
-                {
-                    attempt++;
-                    Thread.Sleep(RetryTimeMS);
-                }
-            }
+                var ln = GetLeftNav(driver);
+                return ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
+            });
 
             if (link == null)
                 throw new Exception("Cannot find Link: " + linkText);
@@ -241,9 +259,7 @@ namespace PrimeTracker.Browsers
 
         private IWebElement GetLeftNav(ChromeDriver driver)
         {
-            int attempt = 0;
-
-            while (attempt < MaxAttempts)
+            var ele = SafeExecutor.ExecuteFunc(() =>
             {
                 try
                 {
@@ -251,19 +267,14 @@ namespace PrimeTracker.Browsers
                 }
                 catch
                 {
-                    try
-                    {
-                        return driver.FindElementById("s-refinements");
-                    }
-                    catch
-                    {
-                        attempt++;
-                        Thread.Sleep(RetryTimeMS);
-                    }
+                    return driver.FindElementById("s-refinements");
                 }
-            }
+            });
 
-            throw new Exception("Cannot find " + LeftNavContainer);
+            if (ele == null)
+                throw new Exception("Cannot find " + LeftNavContainer);
+            else
+                return ele;
         }
 
         //gp/video/watchlist/tv/ref=atv_wtlp_tv? page = 1 & sort = DATE_ADDED_DESC
