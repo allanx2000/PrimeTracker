@@ -44,6 +44,9 @@
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="Innouvous.Utils.Data.SQLiteWrapper">
+      <HintPath>..\..\RateIt\Libraries\Innouvous.Utils.Data.SQLiteWrapper.dll</HintPath>
+    </Reference>
     <Reference Include="innouvous.Utils.Merged">
       <HintPath>E:\Projects\Visual Studio\RateIt\Libraries\innouvous.Utils.Merged.dll</HintPath>
     </Reference>
@@ -91,6 +94,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Browsers\SafeExecutor.cs" />
+    <Compile Include="Dao\IDataStore.cs" />
+    <Compile Include="Dao\SQLiteStore.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
@@ -150,10 +155,16 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Dao\" />
+    <Resource Include="TableScripts\CreateSeriesTable.txt" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="TableScripts\CreateVideosTable.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="TableScripts\CreateTagsTable.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Selenium.Chrome.WebDriver.2.45\build\Selenium.Chrome.WebDriver.targets" Condition="Exists('..\packages\Selenium.Chrome.WebDriver.2.45\build\Selenium.Chrome.WebDriver.targets')" />

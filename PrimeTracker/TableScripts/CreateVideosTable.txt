@@ -1,0 +1,21 @@
+﻿CREATE TABLE {0} (
+  Id            integer PRIMARY KEY,
+  AmazonId      nvarchar NOT NULL,
+  Title         nvarchar NOT NULL,
+  Type          int NOT NULL,
+/*  ImdbRating    float NOT NULL,
+  AmazonRating  float NOT NULL,
+  MyRating      int NOT NULL,
+  */
+  Url           nvarchar NOT NULL,
+  Description   nvarchar,
+  Created       datetime NOT NULL,
+  Updated       datetime NOT NULL,
+  TvSeries_Id   int,
+  UNIQUE (AmazonId, Title),
+  /* Foreign keys */
+  FOREIGN KEY (TvSeries_Id)
+    REFERENCES {1}(Id)
+	ON DELETE SET NULL
+    ON UPDATE CASCADE
+);

@@ -1,4 +1,5 @@
-﻿using PrimeTracker.Models;
+﻿using PrimeTracker.Dao;
+using PrimeTracker.Models;
 using SQLite.CodeFirst;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace PrimeTracker
         }
     }
 
-    class AppContext : DbContext
+    class AppContext
     {
         private static AppContext instance;
 
@@ -46,76 +47,17 @@ namespace PrimeTracker
             get { return instance; }
         }
 
-        public override int SaveChanges()
+        private string dataFile;
+        public IDataStore DataStore
         {
-            try
-            {
-                return base.SaveChanges();
-            }
-            catch (DbEntityValidationException e)
-            {
-                foreach (DbEntityValidationResult item in e.EntityValidationErrors)
-                {
-                    // Get entry
-                    DbEntityEntry entry = item.Entry;
-                    string entityTypeName = entry.Entity.GetType().Name;
-
-                    // Display or log error messages
-
-                    foreach (DbValidationError subItem in item.ValidationErrors)
-                    {
-                        string message = string.Format("Error '{0}' occurred in {1} at {2}",
-                                 subItem.ErrorMessage, entityTypeName, subItem.PropertyName);
-                        Console.WriteLine(message);
-                    }
-
-                    // Rollback changes
-                    switch (entry.State)
-                    {
-                        case EntityState.Added:
-                            entry.State = EntityState.Detached;
-                            break;
-                        case EntityState.Modified:
-                            entry.CurrentValues.SetValues(entry.OriginalValues);
-                            entry.State = EntityState.Unchanged;
-                            break;
-                        case EntityState.Deleted:
-                            entry.State = EntityState.Unchanged;
-                            break;
-                    }
-                }
-
-                throw;
-            }
+            get;
+            private set;
         }
 
-        public DbSet<TagRecord> allTags { get; set; }
-        public DbSet<TvSeries> tvSeries { get; set; }
-        public DbSet<Video> allVideos { get; set; }
-
-        private string dataFile;
-
-        private AppContext(string dataFile) : base(CreateConnection(dataFile), true)
+        private AppContext(string dataFile)
         {
             this.dataFile = dataFile;
-        }
-
-        private static SQLiteConnection CreateConnection(string dataFile)
-        {
-            return new SQLiteConnection()
-            {
-                ConnectionString = new SQLiteConnectionStringBuilder()
-                {
-                    DataSource = dataFile,
-                    ForeignKeys = true
-                }.ConnectionString
-            };
-        }
-
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
-        {
-            var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<AppContext>(modelBuilder);
-            Database.SetInitializer(sqliteConnectionInitializer);
+            DataStore = new SQLiteStore(dataFile);
         }
     }
 }

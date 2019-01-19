@@ -50,9 +50,13 @@
                     <Button Command="{Binding RefreshWatchlistCommand}">Refresh</Button>
                 </StackPanel>
             </Grid>
-
-
         </GroupBox>
+
+            <GroupBox Grid.Column="1" Header="Recently Added Movies">
+                <ListBox ItemsSource="{Binding RecentlyAddedMovies}" MouseDoubleClick="OpenAmazonUrl"
+                             ItemTemplate="{StaticResource VideoTemplate}">
+                </ListBox>
+            </GroupBox>
     </Grid>
     </DockPanel>
 </Window>

@@ -9,7 +9,7 @@ namespace PrimeTracker.Models
     public class TagRecord
     {
         [Key, ForeignKey("Parent"), Column(Order = 0)]
-        public int VideoId { get; set; }
+        public int? VideoId { get; set; }
 
         [Key, Column(Order = 1)]
         public TagTypes Value { get; set; }

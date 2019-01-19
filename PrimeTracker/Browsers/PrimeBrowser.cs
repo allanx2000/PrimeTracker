@@ -158,6 +158,8 @@ namespace PrimeTracker.Browsers
             FindAndGotoLink("Included with Prime");
             FindAndGotoLink(days);
             FindRatingLink(4);
+
+            FindAndClickInput("Movies", 1);
             FindAndClickSpan("2010 & Newer");
             FindAndClickSpan("2000 - 2009");
             FindAndGotoLink("High Definition [HD]");
@@ -283,6 +285,7 @@ namespace PrimeTracker.Browsers
             return id;
         }
 
+        
         private void FindAndClickSpan(string text)
         {
             SafeExecutor.ExecuteAction(() =>
@@ -293,6 +296,28 @@ namespace PrimeTracker.Browsers
                 el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
 
             }, "Cannot find span: " + text);
+        }
+
+        private void FindAndClickInput(string text, int idx)
+        {
+            var ln = GetLeftNav(driver);
+
+            var matches = ln.FindElements(By.XPath(".//span[text()='Movies']"));
+            var el = matches[idx];
+            //ln.FindElement(By.XPath($".//input[text()='{text}']"));
+
+            el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
+
+            /*
+            SafeExecutor.ExecuteAction(() =>
+            {
+                var ln = GetLeftNav(driver);
+                var el = ln.FindElement(By.XPath($".//input[text()='{text}', @type='checkbox']"));
+
+                el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
+
+            }, "Cannot find input: " + text);
+            */
         }
 
         private void FindRatingLink(int minRating)

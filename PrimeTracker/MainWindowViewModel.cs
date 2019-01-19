@@ -9,6 +9,7 @@ using PrimeTracker.Models;
 using Innouvous.Utils.MVVM;
 using System.Windows.Input;
 using Innouvous.Utils;
+using PrimeTracker.Dao;
 
 namespace PrimeTracker
 {
@@ -33,29 +34,64 @@ namespace PrimeTracker
             this.mainWindow = mainWindow;
 
             InitializeWatchlist();
+            InitializeRecentlyAdded();
 
             LoadFromContext();
 
+            //RefreshRecentlyAdded();
+        }
+
+
+
+        //TODO: Refactor out and use Settings
+        private void LoadFromContext()
+        {
+            var ctx = AppContext.InitializeAppContext(AppContext.Settings.DbPath);
+
+            /*
+            var today = (from i in AppContext.Instance.allVideos where i.Created >= DateTime.Today select i).ToList();
+
+            AppContext.Instance.allVideos.RemoveRange(today);
+            AppContext.Instance.SaveChanges();
+            */
+
+            LoadWatchlist();
+            LoadRecentlyAdded();
+        }
+
+        private IDataStore DataStore
+        {
+            get
+            {
+                return AppContext.Instance.DataStore;
+            }
+        }
+
+        #region Recently Added
+
+        private void RefreshRecentlyAdded()
+        {
             var list = Browser.GetRecentlyAddedVideos();
 
             List<Video> added = new List<Video>();
             List<Video> duplicates = new List<Video>();
 
+
             foreach (Video v in list)
             {
-                var existing = AppContext.Instance.allVideos.Where(x => x.AmazonId == v.AmazonId).FirstOrDefault();
+                var existing = DataStore.GetVideoByAmazonId(v.AmazonId);
 
                 if (existing == null)
                 {
-                    v.Created = v.Updated = DateTime.Now;
+                    v.Created = v.Updated = DateTime.Today;
                     v.Tags = new List<TagRecord>();
-                    v.Tags.Add(new TagRecord() { Added = DateTime.Now, Value = TagTypes.New });
+                    v.Tags.Add(TagRecord.Create(TagTypes.New));
 
                     if ((from i in added
                          where i.AmazonId == v.AmazonId || i.Title == v.Title
                          select i).FirstOrDefault() == null)
                     {
-                        AppContext.Instance.allVideos.Add(v);
+                        DataStore.InsertVideo(v);
                         added.Add(v);
                     }
                     else
@@ -65,25 +101,58 @@ namespace PrimeTracker
                 }
                 else
                 {
-                    existing.Updated = DateTime.Now;
-                    //Remove New after X days
+                    existing.Updated = DateTime.Today;
+                    DataStore.UpdateVideo(existing);
                 }
             }
-
-            AppContext.Instance.SaveChanges();
-
         }
 
+        //RecentlyAddedMovies
+        private CollectionViewSource cvsRecentMovies;
+        private ObservableCollection<Video> recentMovies = new ObservableCollection<Video>();
 
-        //TODO: Refactor out and use Settings
-        private void LoadFromContext()
+        public ICollectionView RecentlyAddedMovies
         {
-            AppContext.InitializeAppContext(AppContext.Settings.DbPath);
-         
-            LoadWatchlist();
+            get { return cvsRecentMovies.View; }
         }
 
 
+        private void InitializeRecentlyAdded()
+        {
+            SortDescription SortTitle = new SortDescription("Title", ListSortDirection.Ascending);
+            SortDescription SortCreated = new SortDescription("Created", ListSortDirection.Descending);
+
+            cvsRecentMovies = new CollectionViewSource
+            {
+                Source = recentMovies
+            };
+            cvsRecentMovies.SortDescriptions.Add(SortCreated);
+            cvsRecentMovies.SortDescriptions.Add(SortTitle);
+        }
+
+        private void LoadRecentlyAdded()
+        {
+            recentMovies.Clear();
+
+            //TODO: Need to add expire new?
+
+            foreach (var video in DataStore.GetVideosByTag(TagTypes.New))
+            {
+
+                switch (video.Type)
+                {
+                    case VideoType.Movie:
+                        recentMovies.Add(video);
+                        break;
+                    case VideoType.TvSeason:
+                        //recentShows.Add(tag.Parent);
+                        break;
+                }
+            }
+        }
+
+
+        #endregion
 
         #region Watchlist
 
@@ -148,16 +217,16 @@ namespace PrimeTracker
             shows.Clear();
             movies.Clear();
 
-            foreach (var tag in AppContext.Instance.allTags.Where(t => t.Value == TagTypes.WatchList))
+            foreach (var video in DataStore.GetVideosByTag(TagTypes.WatchList))
             {
 
-                switch (tag.Parent.Type)
+                switch (video.Type)
                 {
                     case VideoType.Movie:
-                        movies.Add(tag.Parent);
+                        movies.Add(video);
                         break;
                     case VideoType.TvSeason:
-                        shows.Add(tag.Parent);
+                        shows.Add(video);
                         break;
                 }
             }
@@ -183,39 +252,54 @@ namespace PrimeTracker
 
         public void RefreshWatchlistItems()
         {
+            List<int> currentIds = new List<int>();
+
             foreach (var i in Browser.GetWatchListVideos())
             {
-                var existing = (from x in AppContext.Instance.allVideos
-                                where x.AmazonId == i.AmazonId
-                                select x).FirstOrDefault();
+                var existing = DataStore.GetVideoByAmazonId(i.AmazonId);
+                int id;
 
                 if (existing != null)
                 {
+
+                    id = existing.Id.Value;
+
                     SetValues(existing, i);
+                    id = existing.Id.Value;
+                    DataStore.UpdateVideo(i);
                 }
                 else
                 {
                     SetValues(i);
-                    AppContext.Instance.allVideos.Add(i);
+                    var video = DataStore.InsertVideo(i);
+                    id = video.Id.Value;
                 }
+
+                currentIds.Add(id);
             }
 
             foreach (var i in Browser.GetWatchListVideos(VideoType.TvSeason))
             {
-                var existing = (from x in AppContext.Instance.allVideos
-                                where x.AmazonId == i.AmazonId
-                                select x).FirstOrDefault();
+                var existing = DataStore.GetVideoByAmazonId(i.AmazonId);
+                int id;
 
                 if (existing != null)
                 {
                     SetValues(existing, i);
+                    id = existing.Id.Value;
+                    DataStore.UpdateVideo(i);
                 }
                 else
                 {
                     SetValues(i);
-                    AppContext.Instance.allVideos.Add(i);
+                    var video = DataStore.InsertVideo(i);
+                    id = video.Id.Value;
                 }
+
+                currentIds.Add(id);
             }
+
+            DataStore.UpdateWatchlistIds(currentIds);
 
             LoadFromContext();
         }
@@ -246,7 +330,7 @@ namespace PrimeTracker
         {
             if (updated == null)
             {
-                originai.Created = originai.Updated = DateTime.Now;
+                originai.Created = originai.Updated = DateTime.Today;
 
                 originai.Tags = new List<TagRecord>(); //Is this null?
                 originai.Tags.Add(TagRecord.Create(TagTypes.WatchList));
@@ -256,7 +340,7 @@ namespace PrimeTracker
             }
             else
             {
-                originai.Updated = DateTime.Now;
+                originai.Updated = DateTime.Today;
 
                 var tags = originai.TagMap;
 

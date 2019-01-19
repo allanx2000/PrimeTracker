@@ -1,0 +1,5 @@
+﻿CREATE TABLE {0} (
+  Id    integer PRIMARY KEY,
+  Name  nvarchar NOT NULL,
+  UNIQUE (Name)
+);

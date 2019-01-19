@@ -1,0 +1,12 @@
+﻿CREATE TABLE {0} (
+  VideoId  int NOT NULL,
+  Value    int NOT NULL,
+  Added    datetime NOT NULL,
+  /* Keys */
+  PRIMARY KEY (VideoId, Value),
+  /* Foreign keys */
+  FOREIGN KEY (VideoId)
+    REFERENCES {1}(Id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);

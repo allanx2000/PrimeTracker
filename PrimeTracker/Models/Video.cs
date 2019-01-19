@@ -20,7 +20,7 @@ namespace PrimeTracker.Models
 
 
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         [Required, Index("IX_AmazonId", IsUnique = true)]
         public string AmazonId { get; set; }

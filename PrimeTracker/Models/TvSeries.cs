@@ -12,7 +12,7 @@ namespace PrimeTracker.Models
     class TvSeries
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         [Required, Index("IX_SeriesName", IsUnique = true)]
         public string Name { get; set; }
