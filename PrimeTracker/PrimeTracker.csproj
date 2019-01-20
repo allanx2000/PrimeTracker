@@ -125,7 +125,7 @@
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="Models\TagTypes.cs" />
     <Compile Include="Models\TagRecord.cs" />
-    <Compile Include="Models\TvSeries.cs" />
+    <Compile Include="Models\Series.cs" />
     <Compile Include="Models\Video.cs" />
     <Compile Include="Models\VideoType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">

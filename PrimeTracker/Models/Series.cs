@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace PrimeTracker.Models
 {
     [Table("tv_series")]
-    class TvSeries
+    class Series
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int? Id { get; set; }

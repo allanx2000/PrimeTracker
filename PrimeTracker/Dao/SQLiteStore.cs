@@ -1,6 +1,8 @@
 ﻿using Innouvous.Utils.Data;
+using PrimeTracker.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -50,100 +52,118 @@ namespace PrimeTracker.Dao
             }
         }
 
-
-        public void UpdateIssue(Issue issue)
+        private Video ParseVideoRow(DataRow r)
         {
-            string sql = $"update {IssuesTable} set is_new = {ToBitFlag(issue.IsNew)}, " +
-                $"is_deleted = { ToBitFlag(issue.Deleted)} where issue_id = {issue.ID}";
-
-            client.ExecuteNonQuery(sql);
-        }
-
-        private string ToBitFlag(bool val)
-        {
-            return val ? "1" : "NULL";
-        }
-
-        public bool InsertIssue(Issue x)
-        {
-            if (!HasIssue(x.ID))
+            var video = new Video()
             {
-                string sql = $"insert into {IssuesTable} values({x.ID},'{x.Title}','{x.IssueUrl}'," +
-                    $"'{x.ImageUrl}', NULL, 1)";
-
-                client.ExecuteNonQuery(sql);
-                return true;
-            }
-            return false;
-        }
-
-        public bool HasIssue(int id)
-        {
-            int ct = Convert.ToInt32(client.ExecuteScalar($"select count(*) from {IssuesTable} where issue_id={id}"));
-            return ct > 0;
-        }
-        public List<Issue> GetIssues(SearchFilter filter = SearchFilter.New, int? limit = null)
-        {
-            string where;
-
-            switch (filter)
-            {
-                case SearchFilter.New:
-                    where = "is_new = 1";
-                    break;
-                case SearchFilter.Deleted:
-                    where = "is_deleted = 1";
-                    break;
-                case SearchFilter.Read:
-                    where = "is_new is NULL and is_deleted is NULL";
-                    break;
-                default:
-                    throw new Exception("SearchFilter not recognized.");
-            }
-
-            string sql = $"select * from {IssuesTable} where {where} order by issue_id desc";
-
-            if (limit != null)
-            {
-                sql += " limit " + limit.Value;
-            }
-
-            DataTable dt = client.ExecuteSelect(sql);
-
-            List<Issue> issues = new List<Issue>();
-            foreach (DataRow r in dt.Rows)
-            {
-                issues.Add(ParseIssueRow(r));
-            }
-
-            return issues;
-        }
-
-        private Issue ParseIssueRow(DataRow r)
-        {
-            var issue = new Issue()
-            {
-                Deleted = !SQLUtils.IsNull(r["is_deleted"]),
-                ID = Convert.ToInt32(r["issue_id"]),
-                ImageUrl = r["image_url"].ToString(),
-                IsNew = !SQLUtils.IsNull(r["is_new"]),
-                IssueUrl = r["issue_url"].ToString(),
-                Title = r["title"].ToString()
+                AmazonId = r["AmazonId"].ToString(),
+                Id = Convert.ToInt32(r["Id"]),
+                Created = SQLUtils.ToDateTime(r["Created"].ToString()),
+                Updated = SQLUtils.ToDateTime(r["Created"].ToString()),
+                Type = (VideoType)Convert.ToInt32(r["Type"]),
+                Url = r["Url"].ToString(),
+                Description = Convert.ToString(r["Description"]),
+                Title = r["Title"].ToString()
             };
 
-            return issue;
+            return video;
         }
 
-        public Issue GetIssue(int issueId)
+        public Video GetVideoByAmazonId(string amazonId)
         {
-            string sql = $"select * from {IssuesTable} where issue_id = {issueId}";
+            string sql = $"select * from {VideosTable} where Id = {amazonId}";
 
-            var dt = client.ExecuteSelect(sql);
+            var dt = ExecuteSelect(sql);
 
             if (dt.Rows.Count == 0)
                 return null;
             else
-                return ParseIssueRow(dt.Rows[0]);
+                return ParseVideoRow(dt.Rows[0]);
+        }
+
+        public Video InsertVideo(Video v)
+        {
+            var txn = GetConnection().BeginTransaction();
+            try
+            {
+                string expDate = v.ExpiringDate == null ? "NULL" : "'" + SQLUtils.ToSQLDateTime(v.ExpiringDate.Value) + "'";
+
+                string cmd = $"INSERT INTO {VideosTable} VALUES(NULL, " +
+                    $"'{SQLUtils.SQLEncode(v.Title)}', {(int)v.Type}, '{SQLUtils.SQLEncode(v.Url)}', " +
+                    $"'{SQLUtils.SQLEncode(v.Description)}', '{SQLUtils.ToSQLDateTime(v.Created)}', " +
+                    $"'{SQLUtils.ToSQLDateTime(v.Updated)}'," +
+                    $" {expDate}, NULL)";
+
+                ExecuteNonQuery(cmd);
+                v.Id = SQLUtils.GetLastInsertRow(this);
+
+                UpdateAllTags(v);
+
+                txn.Commit();
+
+                return v;
+            }
+            catch (Exception e)
+            {
+                txn.Rollback();
+                throw;
+            }
+        }
+
+        private void UpdateAllTags(Video v)
+        {
+            string sql = $"DELETE FROM {TagsTable} WHERE VideoId = {v.Id}";
+            ExecuteNonQuery(sql);
+
+            if (v.Tags != null)
+            {
+                foreach (TagRecord tr in v.Tags)
+                {
+                    InsertTag(v.Id.Value, tr);
+                }
+            }
+
+        }
+
+        public void InsertTag(int videoId, TagRecord tr)
+        {
+            string cmd = $"INSERT INTO {TagsTable} VALUES({videoId}, {(int) tr.Value}, '{SQLUtils.ToSQLDateTime(tr.Added)}')";
+            ExecuteNonQuery(cmd);
+        }
+
+        public void UpdateVideo(Video v)
+        {
+            string sql = $"UPDATE {VideosTable} " +
+                $"SET Updated = {SQLUtils.ToSQLDateTime(v.Updated)}" + //TODO: Add Others
+                $" WHERE Id = {v.Id.Value}";
+
+            ExecuteNonQuery(sql);
+        }
+
+        public List<Video> GetVideosByTag(TagTypes tag)
+        {
+            string cmd = $"SELECT v.* from {VideosTable} v " +
+                $"JOIN {TagsTable} t ON v.Id = t.VideoId " +
+                $"WHERE t.Value={(int)tag}";
+
+            DataTable dt = ExecuteSelect(cmd);
+
+            List<Video> videos = new List<Video>();
+
+            foreach (DataRow r in dt.Rows)
+            {
+                videos.Add(ParseVideoRow(r));
+            }
+
+            return videos;
+        }
+
+        public void UpdateWatchlistIds(List<int> currentIds)
+        {
+            string sql = $"DELETE FROM {TagsTable} WHERE Value = {(int)TagTypes.WatchList} " +
+                $"AND VideoId NOT IN ({string.Join(",", currentIds)})";
+
+            ExecuteNonQuery(sql);
         }
     }
 }

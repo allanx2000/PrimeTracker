@@ -11,10 +11,10 @@
   Description   nvarchar,
   Created       datetime NOT NULL,
   Updated       datetime NOT NULL,
-  TvSeries_Id   int,
+  SeriesId		int,
   UNIQUE (AmazonId, Title),
   /* Foreign keys */
-  FOREIGN KEY (TvSeries_Id)
+  FOREIGN KEY (SeriesId)
     REFERENCES {1}(Id)
 	ON DELETE SET NULL
     ON UPDATE CASCADE
