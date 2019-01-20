@@ -5,13 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PrimeTracker"
         mc:Ignorable="d"
-        Title="Prime Video Browser" Height="450" Width="800" Closing="Window_Closing">
+        WindowStartupLocation="CenterScreen"
+        Title="Prime Video Browser" Height="800" Width="1000" Closing="Window_Closing">
 
     <Window.Resources>
         <DataTemplate x:Key="VideoTemplate">
-            <Label Foreground="{Binding TitleColor}" FontWeight="Bold">
-                <TextBlock Text="{Binding Title}"/>
-            </Label>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Label Grid.Row="0" Foreground="{Binding TitleColor}" FontWeight="Bold">
+                    <TextBlock Text="{Binding Title}"/>
+                </Label>
+
+                <Label Grid.Row="1" FontStyle="Italic">
+                    <TextBlock Text="{Binding CreateDateString}"/>
+                </Label>
+
+            </Grid>
+           
         </DataTemplate>
     </Window.Resources>
 
@@ -20,43 +34,52 @@
             <MenuItem Header="Settings" Command="{Binding ShowSettingsCommand}"/>
         </Menu>
         <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <GroupBox Header="My Watchlist" Grid.Column="0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <GroupBox Header="My Watchlist" Grid.Column="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <GroupBox Header="Movies">
-                    <ListBox ItemsSource="{Binding Movies}" MouseDoubleClick="OpenAmazonUrl"
+                    <GroupBox Header="Movies">
+                        <ListBox ItemsSource="{Binding Movies}" MouseDoubleClick="OpenAmazonUrl"
                              ItemTemplate="{StaticResource VideoTemplate}">
-                    </ListBox>
-                </GroupBox>
+                        </ListBox>
+                    </GroupBox>
 
-                <GroupBox Grid.Row="1" Header="Shows">
-                    <ListBox ItemsSource="{Binding Shows}" MouseDoubleClick="OpenAmazonUrl" 
+                    <GroupBox Grid.Row="1" Header="Shows">
+                        <ListBox ItemsSource="{Binding Shows}" MouseDoubleClick="OpenAmazonUrl" 
                              ItemTemplate="{StaticResource VideoTemplate}">
-                    </ListBox>
-                </GroupBox>
+                        </ListBox>
+                    </GroupBox>
 
-                <StackPanel HorizontalAlignment="Center" Grid.Row="2" Orientation="Horizontal">
-                    <CheckBox IsChecked="{Binding ExpiredOnly}">Expired Only</CheckBox>
-                    <Button Command="{Binding RefreshWatchlistCommand}">Refresh</Button>
-                </StackPanel>
-            </Grid>
-        </GroupBox>
+                    <StackPanel HorizontalAlignment="Center" Grid.Row="2" Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding ExpiredOnly}">Expired Only</CheckBox>
+                        <Button Command="{Binding RefreshWatchlistCommand}">Refresh</Button>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
 
             <GroupBox Grid.Column="1" Header="Recently Added Movies">
-                <ListBox ItemsSource="{Binding RecentlyAddedMovies}" MouseDoubleClick="OpenAmazonUrl"
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox ItemsSource="{Binding RecentlyAddedMovies}" MouseDoubleClick="OpenAmazonUrl"
                              ItemTemplate="{StaticResource VideoTemplate}">
-                </ListBox>
+                    </ListBox>
+
+                    <Button Grid.Row="1" Width="80" Command="{Binding RefreshRecentCommand}">Refresh</Button>
+                </Grid>
             </GroupBox>
-    </Grid>
+        </Grid>
     </DockPanel>
 </Window>

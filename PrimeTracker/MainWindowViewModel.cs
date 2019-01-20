@@ -38,7 +38,6 @@ namespace PrimeTracker
 
             LoadFromContext();
 
-            //RefreshRecentlyAdded();
         }
 
 
@@ -75,7 +74,8 @@ namespace PrimeTracker
 
             List<Video> added = new List<Video>();
             List<Video> duplicates = new List<Video>();
-
+            List<Video> failedIds = new List<Video>();
+            
 
             foreach (Video v in list)
             {
@@ -84,15 +84,21 @@ namespace PrimeTracker
                 if (existing == null)
                 {
                     v.Created = v.Updated = DateTime.Today;
-                    v.Tags = new List<TagRecord>();
-                    v.Tags.Add(TagRecord.Create(-1, TagTypes.New));
+                    v.AddTag(TagRecord.Create(-1, TagTypes.New));
 
                     if ((from i in added
                          where i.AmazonId == v.AmazonId || i.Title == v.Title
                          select i).FirstOrDefault() == null)
                     {
+                        try
+                        { 
                         DataStore.InsertVideo(v);
                         added.Add(v);
+                        }
+                        catch (Exception e)
+                        {
+                            failedIds.Add(v);
+                        }
                     }
                     else
                     {
@@ -105,6 +111,8 @@ namespace PrimeTracker
                     DataStore.UpdateVideo(existing);
                 }
             }
+
+            //TODO: Add Results Message
         }
 
         //RecentlyAddedMovies
@@ -136,7 +144,7 @@ namespace PrimeTracker
 
             //TODO: Need to add expire new?
 
-            foreach (var video in DataStore.GetVideosByTag(TagTypes.New))
+            foreach (var video in DataStore.GetVideosByCreatedDate(30))
             {
                 switch (video.Type)
                 {
@@ -147,6 +155,26 @@ namespace PrimeTracker
                         //recentShows.Add(tag.Parent);
                         break;
                 }
+            }
+        }
+
+        public ICommand RefreshRecentCommand
+        {
+            get
+            {
+                return new CommandHelper(RefreshRecentMovies);
+            }
+        }
+
+        private void RefreshRecentMovies()
+        {
+            try
+            {
+                RefreshRecentlyAdded();
+            }
+            catch (Exception e)
+            {
+                MessageBoxFactory.ShowError(e);
             }
         }
 
@@ -329,22 +357,25 @@ namespace PrimeTracker
         {
             var watchListTag = TagRecord.Create(originai.Id.HasValue? originai.Id.Value : -1, TagTypes.WatchList);
 
+            
             if (updated == null)
             {
                 originai.Created = originai.Updated = DateTime.Today;
-
-                originai.Tags = new List<TagRecord>(); //Is this null?
-                originai.Tags.Add(watchListTag);
+                originai.AddTag(watchListTag);
             }
             else
             {
                 originai.Updated = DateTime.Today;
 
-                var tags = originai.TagMap;
+                originai.AddTag(watchListTag);
 
-
-                if (!tags.ContainsKey(TagTypes.WatchList))
-                    originai.AddTag(watchListTag);
+                if (updated.Tags != null)
+                {
+                    foreach (var t in updated.Tags)
+                    {
+                        originai.AddTag(t);
+                    }
+                }
 
             }
         }

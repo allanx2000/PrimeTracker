@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PrimeTracker.Dao
 {
-    class SQLiteStore : Innouvous.Utils.Data.SQLiteClient, IDataStore
+    class SQLiteStore : SQLiteClient, IDataStore
     {
         private string dataFile;
 
@@ -146,6 +146,9 @@ namespace PrimeTracker.Dao
 
             ExecuteNonQuery(sql);
 
+            foreach (var t in v.Tags)
+                t.VideoId = v.Id.Value;
+
             UpdateAllTags(v);
         }
 
@@ -210,6 +213,27 @@ namespace PrimeTracker.Dao
                 $"AND VideoId NOT IN ({string.Join(",", currentIds)})";
 
             ExecuteNonQuery(sql);
+        }
+
+        public List<Video> GetVideosByCreatedDate(int days)
+        {
+            var start = DateTime.Today.AddDays(-1 * days);
+            string sql = $"select Id from {VideosTable} " +
+                $"where Created >= '{SQLUtils.ToSQLDateTime(start) }'";
+
+            var dt = ExecuteSelect(sql);
+
+            List<Video> videos = new List<Video>();
+            foreach (DataRow r in dt.Rows)
+            {
+                var v = GetVideoById(Convert.ToInt32(r["Id"]));
+                if (!v.TagMap.ContainsKey(TagTypes.WatchList))
+                {
+                    videos.Add(v);
+                }
+            }
+
+            return videos;
         }
     }
 }

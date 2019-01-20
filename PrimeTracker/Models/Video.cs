@@ -18,6 +18,10 @@ namespace PrimeTracker.Models
             get { return !IsExpired ? ColorBrushes.Black : ColorBrushes.LightGray; }
         }
 
+        public string CreateDateString
+        {
+            get { return Created.ToShortDateString(); }
+        }
 
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int? Id { get; set; }
@@ -76,6 +80,7 @@ namespace PrimeTracker.Models
             return Title + " (" + AmazonId + ")";
         }
 
+        
         internal void AddTag(TagRecord tag)
         {
             if (Tags == null)
@@ -83,7 +88,7 @@ namespace PrimeTracker.Models
                 Tags = new List<TagRecord>();
                 Tags.Add(tag);
             }
-            else if (!Tags.Contains(tag))
+            else if ((from t in Tags where t.Value == tag.Value select t).Count() == 0)
             {
                 Tags.Add(tag);
             }

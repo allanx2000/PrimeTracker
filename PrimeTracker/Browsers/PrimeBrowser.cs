@@ -303,11 +303,23 @@ namespace PrimeTracker.Browsers
             var ln = GetLeftNav(driver);
 
             var matches = ln.FindElements(By.XPath(".//span[text()='Movies']"));
-            var el = matches[idx];
+
+            var el = idx >= matches.Count ? matches[matches.Count - 1] : matches[idx];
             //ln.FindElement(By.XPath($".//input[text()='{text}']"));
 
-            el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
-
+            for (int i = 0; i < 3; i++)
+            {
+                try
+                {
+                    el.Click();
+                    break;
+                }
+                catch (Exception e)
+                {
+                    el = el.FindElement(By.XPath("./.."));
+                }
+                // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
+            }
             /*
             SafeExecutor.ExecuteAction(() =>
             {
