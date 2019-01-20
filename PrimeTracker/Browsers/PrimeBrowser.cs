@@ -149,8 +149,8 @@ namespace PrimeTracker.Browsers
              * * Navigate https://www.amazon.com/
              */
 
-            if (!LoggedIn)
-                Login();
+            //if (!LoggedIn)
+            //    Login();
 
             driver.Navigate().GoToUrl(AmazonBaseUrl + "s/ref=nb_sb_noss?url=search-alias%3Dinstant-video");
 

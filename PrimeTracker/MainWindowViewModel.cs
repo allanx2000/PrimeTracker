@@ -75,7 +75,9 @@ namespace PrimeTracker
             List<Video> added = new List<Video>();
             List<Video> duplicates = new List<Video>();
             List<Video> failedIds = new List<Video>();
-            
+
+            DateTime runTime = DateTime.Now;
+
 
             foreach (Video v in list)
             {
@@ -83,7 +85,7 @@ namespace PrimeTracker
 
                 if (existing == null)
                 {
-                    v.Created = v.Updated = DateTime.Today;
+                    v.Created = v.Updated = runTime;
                     v.AddTag(TagRecord.Create(-1, TagTypes.New));
 
                     if ((from i in added
@@ -107,12 +109,15 @@ namespace PrimeTracker
                 }
                 else
                 {
-                    existing.Updated = DateTime.Today;
+                    existing.Updated = runTime;
                     DataStore.UpdateVideo(existing);
                 }
             }
 
             //TODO: Add Results Message
+
+            RefreshResults result = new RefreshResults(added, failedIds);
+
         }
 
         //RecentlyAddedMovies
@@ -355,17 +360,20 @@ namespace PrimeTracker
 
         private static void SetWatchlistValues(Video originai, Video updated = null)
         {
+            DateTime runTime = DateTime.Now;
+
+
             var watchListTag = TagRecord.Create(originai.Id.HasValue? originai.Id.Value : -1, TagTypes.WatchList);
 
             
             if (updated == null)
             {
-                originai.Created = originai.Updated = DateTime.Today;
+                originai.Created = originai.Updated = runTime;
                 originai.AddTag(watchListTag);
             }
             else
             {
-                originai.Updated = DateTime.Today;
+                originai.Updated = runTime;
 
                 originai.AddTag(watchListTag);
 

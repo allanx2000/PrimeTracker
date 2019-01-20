@@ -96,6 +96,7 @@
     <Compile Include="Browsers\SafeExecutor.cs" />
     <Compile Include="Dao\IDataStore.cs" />
     <Compile Include="Dao\SQLiteStore.cs" />
+    <Compile Include="RefreshResults.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>

@@ -1,7 +1,7 @@
 ﻿CREATE TABLE {0} (
   VideoId  int NOT NULL,
   Value    int NOT NULL,
-  Added    datetime NOT NULL,
+  Added    text NOT NULL,
   /* Keys */
   PRIMARY KEY (VideoId, Value),
   /* Foreign keys */

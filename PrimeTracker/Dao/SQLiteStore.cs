@@ -54,12 +54,15 @@ namespace PrimeTracker.Dao
 
         private Video ParseVideoRow(DataRow r, bool attachRelated)
         {
+            var updated = DateTime.Parse(r["Updated"].ToString());
+
+
             var video = new Video()
             {
                 AmazonId = r["AmazonId"].ToString(),
                 Id = Convert.ToInt32(r["Id"]),
-                Created = DateTime.Parse(r["Created"].ToString()),
-                Updated = DateTime.Parse(r["Updated"].ToString()),
+                Created = SQLUtils.ToDateTime(r["Created"].ToString()),
+                Updated = updated, //SQLUtils.ToDateTime(r["Updated"].ToString())
                 Type = (VideoType)Convert.ToInt32(r["Type"]),
                 Url = r["Url"].ToString(),
                 Description = Convert.ToString(r["Description"]),
@@ -201,7 +204,7 @@ namespace PrimeTracker.Dao
         {
             return new TagRecord()
             {
-                Added = DateTime.Parse(r["Added"].ToString()),
+                Added = SQLUtils.ToDateTime(r["Added"].ToString()),
                 Value = (TagTypes)Convert.ToInt32(r["Value"]),
                 VideoId = Convert.ToInt32(r["VideoId"])
             };

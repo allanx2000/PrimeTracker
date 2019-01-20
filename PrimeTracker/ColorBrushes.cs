@@ -11,5 +11,6 @@ namespace PrimeTracker
     {
         public static readonly SolidColorBrush Black = new SolidColorBrush(Colors.Black);
         public static readonly SolidColorBrush LightGray = new SolidColorBrush(Colors.LightGray);
+        public static readonly SolidColorBrush DarkOrange = new SolidColorBrush(Colors.DarkOrange);
     }
 }

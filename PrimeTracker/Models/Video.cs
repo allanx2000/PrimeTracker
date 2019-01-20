@@ -15,12 +15,22 @@ namespace PrimeTracker.Models
 
         public SolidColorBrush TitleColor
         {
-            get { return !IsExpired ? ColorBrushes.Black : ColorBrushes.LightGray; }
+            get {
+
+                var tm = TagMap;
+
+                if (IsExpired)
+                    return ColorBrushes.LightGray;
+                //else if (tm.ContainsKey(TagTypes.New))
+                //    return ColorBrushes.DarkOrange;
+                else
+                    return ColorBrushes.Black; 
+            }
         }
 
         public string CreateDateString
         {
-            get { return Created.ToShortDateString(); }
+            get { return Created.ToShortDateString() + " " + Created.ToShortTimeString(); }
         }
 
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]

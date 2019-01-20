@@ -9,8 +9,8 @@
   */
   Url           nvarchar NOT NULL,
   Description   nvarchar,
-  Created       datetime NOT NULL,
-  Updated       datetime NOT NULL,
+  Created       text NOT NULL,
+  Updated       text NOT NULL,
   SeriesId		int,
   UNIQUE (AmazonId, Title),
   /* Foreign keys */
