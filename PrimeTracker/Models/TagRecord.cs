@@ -12,14 +12,11 @@ namespace PrimeTracker.Models
 
         public DateTime Added { get; set; }
 
-        public virtual Video Parent { get; set; }
-
-        private TagRecord() { }
-
-        internal static TagRecord Create(TagTypes value)
+        internal static TagRecord Create(int videoId, TagTypes value)
         {
             TagRecord tr = new TagRecord()
             {
+                VideoId = videoId,
                 Added = DateTime.Now,
                 Value = value
             };

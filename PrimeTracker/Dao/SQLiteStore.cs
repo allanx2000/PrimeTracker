@@ -41,7 +41,7 @@ namespace PrimeTracker.Dao
         {
             if (!SQLUtils.CheckTableExists(VideosTable, this))
             {
-                string sql = LoadFromText("SeriesTableTable", SeriesTable);
+                string sql = LoadFromText("CreateSeriesTable", SeriesTable);
                 ExecuteNonQuery(sql);
 
                 sql = LoadFromText("CreateVideosTable", VideosTable, SeriesTable);
@@ -52,33 +52,38 @@ namespace PrimeTracker.Dao
             }
         }
 
-        private Video ParseVideoRow(DataRow r)
+        private Video ParseVideoRow(DataRow r, bool attachRelated)
         {
             var video = new Video()
             {
                 AmazonId = r["AmazonId"].ToString(),
                 Id = Convert.ToInt32(r["Id"]),
-                Created = SQLUtils.ToDateTime(r["Created"].ToString()),
-                Updated = SQLUtils.ToDateTime(r["Created"].ToString()),
+                Created = DateTime.Parse(r["Created"].ToString()),
+                Updated = DateTime.Parse(r["Updated"].ToString()),
                 Type = (VideoType)Convert.ToInt32(r["Type"]),
                 Url = r["Url"].ToString(),
                 Description = Convert.ToString(r["Description"]),
                 Title = r["Title"].ToString()
             };
 
+            if (attachRelated)
+            {
+                video.Tags = GetTags(video.Id.Value);
+            }
+
             return video;
         }
 
         public Video GetVideoByAmazonId(string amazonId)
         {
-            string sql = $"select * from {VideosTable} where Id = {amazonId}";
+            string sql = $"select * from {VideosTable} where AmazonId = '{amazonId}'";
 
             var dt = ExecuteSelect(sql);
 
             if (dt.Rows.Count == 0)
                 return null;
             else
-                return ParseVideoRow(dt.Rows[0]);
+                return ParseVideoRow(dt.Rows[0], true);
         }
 
         public Video InsertVideo(Video v)
@@ -86,16 +91,18 @@ namespace PrimeTracker.Dao
             var txn = GetConnection().BeginTransaction();
             try
             {
-                string expDate = v.ExpiringDate == null ? "NULL" : "'" + SQLUtils.ToSQLDateTime(v.ExpiringDate.Value) + "'";
-
-                string cmd = $"INSERT INTO {VideosTable} VALUES(NULL, " +
+                
+                string cmd = $"INSERT INTO {VideosTable} VALUES(NULL, '{v.AmazonId}'," +
                     $"'{SQLUtils.SQLEncode(v.Title)}', {(int)v.Type}, '{SQLUtils.SQLEncode(v.Url)}', " +
                     $"'{SQLUtils.SQLEncode(v.Description)}', '{SQLUtils.ToSQLDateTime(v.Created)}', " +
                     $"'{SQLUtils.ToSQLDateTime(v.Updated)}'," +
-                    $" {expDate}, NULL)";
+                    $" NULL)"; //SeriesId
 
                 ExecuteNonQuery(cmd);
                 v.Id = SQLUtils.GetLastInsertRow(this);
+
+                foreach (var t in v.Tags)
+                    t.VideoId = v.Id.Value;
 
                 UpdateAllTags(v);
 
@@ -134,17 +141,17 @@ namespace PrimeTracker.Dao
         public void UpdateVideo(Video v)
         {
             string sql = $"UPDATE {VideosTable} " +
-                $"SET Updated = {SQLUtils.ToSQLDateTime(v.Updated)}" + //TODO: Add Others
+                $"SET Updated = '{SQLUtils.ToSQLDateTime(v.Updated)}'" + //TODO: Add Others
                 $" WHERE Id = {v.Id.Value}";
 
             ExecuteNonQuery(sql);
+
+            UpdateAllTags(v);
         }
 
         public List<Video> GetVideosByTag(TagTypes tag)
         {
-            string cmd = $"SELECT v.* from {VideosTable} v " +
-                $"JOIN {TagsTable} t ON v.Id = t.VideoId " +
-                $"WHERE t.Value={(int)tag}";
+            string cmd = $"SELECT VideoId from {TagsTable} WHERE Value={(int)tag}";
 
             DataTable dt = ExecuteSelect(cmd);
 
@@ -152,10 +159,49 @@ namespace PrimeTracker.Dao
 
             foreach (DataRow r in dt.Rows)
             {
-                videos.Add(ParseVideoRow(r));
+                Video video = GetVideoById(Convert.ToInt32(r["VideoId"]));
+                videos.Add(video);
             }
 
             return videos;
+        }
+
+        private Video GetVideoById(int id)
+        {
+            string cmd = $"select * from {VideosTable} where Id = {id}";
+
+            DataTable dt = ExecuteSelect(cmd);
+            if (dt.Rows.Count == 0)
+                return null;
+
+            Video v = ParseVideoRow(dt.Rows[0], true);
+            return v;
+        }
+
+        private List<TagRecord> GetTags(int videoId)
+        {
+            string sql = $"select * from {TagsTable} where VideoId = {videoId}";
+            DataTable dt = ExecuteSelect(sql);
+
+            List<TagRecord> tags = new List<TagRecord>();
+
+            foreach (DataRow r in dt.Rows)
+            {
+                TagRecord t = ParseTagRecord(r);
+                tags.Add(t);
+            }
+
+            return tags;
+        }
+
+        private static TagRecord ParseTagRecord(DataRow r)
+        {
+            return new TagRecord()
+            {
+                Added = DateTime.Parse(r["Added"].ToString()),
+                Value = (TagTypes)Convert.ToInt32(r["Value"]),
+                VideoId = Convert.ToInt32(r["VideoId"])
+            };
         }
 
         public void UpdateWatchlistIds(List<int> currentIds)

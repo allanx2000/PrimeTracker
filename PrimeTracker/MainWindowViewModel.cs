@@ -85,7 +85,7 @@ namespace PrimeTracker
                 {
                     v.Created = v.Updated = DateTime.Today;
                     v.Tags = new List<TagRecord>();
-                    v.Tags.Add(TagRecord.Create(TagTypes.New));
+                    v.Tags.Add(TagRecord.Create(-1, TagTypes.New));
 
                     if ((from i in added
                          where i.AmazonId == v.AmazonId || i.Title == v.Title
@@ -138,7 +138,6 @@ namespace PrimeTracker
 
             foreach (var video in DataStore.GetVideosByTag(TagTypes.New))
             {
-
                 switch (video.Type)
                 {
                     case VideoType.Movie:
@@ -189,7 +188,7 @@ namespace PrimeTracker
         private bool FilterVideos(object obj)
         {
             if (ExpiredOnly)
-                return ((Video)obj).ExpiringDate != null;
+                return ((Video)obj).IsExpired;
             else
                 return true;
         }
@@ -264,13 +263,13 @@ namespace PrimeTracker
 
                     id = existing.Id.Value;
 
-                    SetValues(existing, i);
+                    SetWatchlistValues(existing, i);
                     id = existing.Id.Value;
-                    DataStore.UpdateVideo(i);
+                    DataStore.UpdateVideo(existing);
                 }
                 else
                 {
-                    SetValues(i);
+                    SetWatchlistValues(i);
                     var video = DataStore.InsertVideo(i);
                     id = video.Id.Value;
                 }
@@ -285,13 +284,13 @@ namespace PrimeTracker
 
                 if (existing != null)
                 {
-                    SetValues(existing, i);
+                    SetWatchlistValues(existing, i);
                     id = existing.Id.Value;
-                    DataStore.UpdateVideo(i);
+                    DataStore.UpdateVideo(existing);
                 }
                 else
                 {
-                    SetValues(i);
+                    SetWatchlistValues(i);
                     var video = DataStore.InsertVideo(i);
                     id = video.Id.Value;
                 }
@@ -326,17 +325,16 @@ namespace PrimeTracker
             }
         }
 
-        private static void SetValues(Video originai, Video updated = null)
+        private static void SetWatchlistValues(Video originai, Video updated = null)
         {
+            var watchListTag = TagRecord.Create(originai.Id.HasValue? originai.Id.Value : -1, TagTypes.WatchList);
+
             if (updated == null)
             {
                 originai.Created = originai.Updated = DateTime.Today;
 
                 originai.Tags = new List<TagRecord>(); //Is this null?
-                originai.Tags.Add(TagRecord.Create(TagTypes.WatchList));
-
-                if (originai.ExpiringDate != null)
-                    originai.Tags.Add(TagRecord.Create(TagTypes.Expired));
+                originai.Tags.Add(watchListTag);
             }
             else
             {
@@ -344,10 +342,10 @@ namespace PrimeTracker
 
                 var tags = originai.TagMap;
 
-                if (originai.ExpiringDate != null && tags.ContainsKey(TagTypes.Expired))
-                {
-                    originai.Tags.Add(TagRecord.Create(TagTypes.Expired));
-                }
+
+                if (!tags.ContainsKey(TagTypes.WatchList))
+                    originai.AddTag(watchListTag);
+
             }
         }
     }

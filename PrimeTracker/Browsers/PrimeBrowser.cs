@@ -445,7 +445,8 @@ namespace PrimeTracker.Browsers
 
             foreach (var ex in expired)
             {
-                videos[ex].ExpiringDate = DateTime.Today;
+                var v = videos[ex];
+                v.AddTag(TagRecord.Create(-1, TagTypes.Expired));
             }
 
             return videos.Values.ToList();

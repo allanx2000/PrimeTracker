@@ -32,7 +32,7 @@ namespace PrimeTracker
                 var dlg = new SettingsWindow();
                 dlg.ShowDialog();
             }
-            
+         
             InitializeComponent();
 
             Reload();

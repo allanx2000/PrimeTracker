@@ -94,5 +94,24 @@ namespace PrimeTracker
                 MessageBoxFactory.ShowError(e);
             }
         }
+
+        public ICommand BrowseDBPathCommand
+        {
+            get { return new CommandHelper(BrowseDBPath); }
+        }
+
+        private void BrowseDBPath()
+        {
+            var dlg = DialogsUtility.CreateOpenFileDialog("Open Database", checkFileExists: false);
+            DialogsUtility.AddExtension(dlg, "SQLite Database", "*.db");
+
+            var res = dlg.ShowDialog();
+
+            if (true == res.Value)
+            {
+                DbPath = dlg.FileName;
+            }
+            
+        }
     }
 }

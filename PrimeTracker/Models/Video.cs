@@ -12,10 +12,10 @@ namespace PrimeTracker.Models
     [Table("videos")]
     public class Video
     {
-        
+
         public SolidColorBrush TitleColor
         {
-            get { return ExpiringDate == null ? ColorBrushes.Black : ColorBrushes.LightGray; }
+            get { return !IsExpired ? ColorBrushes.Black : ColorBrushes.LightGray; }
         }
 
 
@@ -46,8 +46,6 @@ namespace PrimeTracker.Models
         [Required]
         public DateTime Updated { get; set; }
 
-        public DateTime? ExpiringDate { get; set; }
-
         public virtual ICollection<TagRecord> Tags { get; set; }
 
         public Dictionary<TagTypes, TagRecord> TagMap
@@ -65,9 +63,30 @@ namespace PrimeTracker.Models
             }
         }
 
+        public bool IsExpired
+        {
+            get
+            {
+                return Tags != null && Tags.Count(x => x.Value == TagTypes.Expired) > 0;
+            }
+        }
+
         public override string ToString()
         {
             return Title + " (" + AmazonId + ")";
+        }
+
+        internal void AddTag(TagRecord tag)
+        {
+            if (Tags == null)
+            {
+                Tags = new List<TagRecord>();
+                Tags.Add(tag);
+            }
+            else if (!Tags.Contains(tag))
+            {
+                Tags.Add(tag);
+            }
         }
     }
 
