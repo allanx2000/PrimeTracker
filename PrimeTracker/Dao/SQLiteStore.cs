@@ -71,7 +71,10 @@ namespace PrimeTracker.Dao
 
             if (attachRelated)
             {
-                video.Tags = GetTags(video.Id.Value);
+                foreach (var t in GetTags(video.Id.Value))
+                {
+                    video.AddTag(t);
+                }
             }
 
             return video;
@@ -104,7 +107,7 @@ namespace PrimeTracker.Dao
                 ExecuteNonQuery(cmd);
                 v.Id = SQLUtils.GetLastInsertRow(this);
 
-                foreach (var t in v.Tags)
+                foreach (var t in v.Tags.Values)
                     t.VideoId = v.Id.Value;
 
                 UpdateAllTags(v);
@@ -127,7 +130,7 @@ namespace PrimeTracker.Dao
 
             if (v.Tags != null)
             {
-                foreach (TagRecord tr in v.Tags)
+                foreach (TagRecord tr in v.Tags.Values)
                 {
                     InsertTag(v.Id.Value, tr);
                 }
@@ -149,7 +152,7 @@ namespace PrimeTracker.Dao
 
             ExecuteNonQuery(sql);
 
-            foreach (var t in v.Tags)
+            foreach (var t in v.Tags.Values)
                 t.VideoId = v.Id.Value;
 
             UpdateAllTags(v);
@@ -230,13 +233,27 @@ namespace PrimeTracker.Dao
             foreach (DataRow r in dt.Rows)
             {
                 var v = GetVideoById(Convert.ToInt32(r["Id"]));
-                if (!v.TagMap.ContainsKey(TagTypes.WatchList))
+                if (!v.Tags.ContainsKey(TagTypes.WatchList))
                 {
                     videos.Add(v);
                 }
             }
 
             return videos;
+        }
+
+        public Video GetExistingVideo(VideoType type, string amazonId, string title)
+        {
+            string cmd = $"select * from {VideosTable} where Type = {(int) type}" +
+                $" AND (AmazonId='{amazonId}' OR Title='{SQLUtils.SQLEncode(title)}')";
+
+            DataTable dt = ExecuteSelect(cmd);
+            if (dt.Rows.Count == 0)
+                return null;
+
+            Video existing = ParseVideoRow(dt.Rows[0], true);
+            return existing;
+
         }
     }
 }

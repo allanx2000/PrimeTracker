@@ -20,5 +20,6 @@ namespace PrimeTracker.Dao
         /// <param name="currentIds"></param>
         void UpdateWatchlistIds(List<int> currentIds);
         List<Video> GetVideosByCreatedDate(int days);
+        Video GetExistingVideo(VideoType type, string amazonId, string title);
     }
 }

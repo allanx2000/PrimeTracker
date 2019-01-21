@@ -51,8 +51,7 @@ namespace PrimeTracker
             {
                 Video video = lb.SelectedItem as Video;
 
-                if (video != null && !string.IsNullOrEmpty(video.Url))
-                    Process.Start(video.Url);
+                vm.OpenVideo(video);
             }
         }
 

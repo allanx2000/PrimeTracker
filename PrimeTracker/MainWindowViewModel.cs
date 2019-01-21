@@ -10,6 +10,8 @@ using Innouvous.Utils.MVVM;
 using System.Windows.Input;
 using Innouvous.Utils;
 using PrimeTracker.Dao;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace PrimeTracker
 {
@@ -32,6 +34,9 @@ namespace PrimeTracker
         public MainWindowViewModel(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
+
+            CanRefreshRecentlyAdded = true;
+            CanRefreshWatchList = true;
 
             InitializeWatchlist();
             InitializeRecentlyAdded();
@@ -58,6 +63,17 @@ namespace PrimeTracker
             LoadRecentlyAdded();
         }
 
+        internal void OpenVideo(Video video)
+        {
+            if (video != null && !string.IsNullOrEmpty(video.Url))
+            {
+                Process.Start(video.Url);
+
+                video.RemoveTag(TagTypes.New);
+                AppContext.Instance.DataStore.UpdateVideo(video);
+            }
+        }
+
         private IDataStore DataStore
         {
             get
@@ -68,7 +84,7 @@ namespace PrimeTracker
 
         #region Recently Added
 
-        private void RefreshRecentlyAdded()
+        private RefreshResults RefreshRecentlyAdded()
         {
             var list = Browser.GetRecentlyAddedVideos();
 
@@ -81,7 +97,7 @@ namespace PrimeTracker
 
             foreach (Video v in list)
             {
-                var existing = DataStore.GetVideoByAmazonId(v.AmazonId);
+                var existing = DataStore.GetExistingVideo(v.Type, v.AmazonId, v.Title);
 
                 if (existing == null)
                 {
@@ -93,9 +109,9 @@ namespace PrimeTracker
                          select i).FirstOrDefault() == null)
                     {
                         try
-                        { 
-                        DataStore.InsertVideo(v);
-                        added.Add(v);
+                        {
+                            DataStore.InsertVideo(v);
+                            added.Add(v);
                         }
                         catch (Exception e)
                         {
@@ -114,10 +130,8 @@ namespace PrimeTracker
                 }
             }
 
-            //TODO: Add Results Message
-
             RefreshResults result = new RefreshResults(added, failedIds);
-
+            return result;
         }
 
         //RecentlyAddedMovies
@@ -132,6 +146,7 @@ namespace PrimeTracker
 
         private void InitializeRecentlyAdded()
         {
+
             SortDescription SortTitle = new SortDescription("Title", ListSortDirection.Ascending);
             SortDescription SortCreated = new SortDescription("Created", ListSortDirection.Descending);
 
@@ -146,8 +161,6 @@ namespace PrimeTracker
         private void LoadRecentlyAdded()
         {
             recentMovies.Clear();
-
-            //TODO: Need to add expire new?
 
             foreach (var video in DataStore.GetVideosByCreatedDate(30))
             {
@@ -167,20 +180,35 @@ namespace PrimeTracker
         {
             get
             {
-                return new CommandHelper(RefreshRecentMovies);
+                return new CommandHelper(RefreshRecentMoviesAsync);
             }
         }
 
-        private void RefreshRecentMovies()
+        private async void RefreshRecentMoviesAsync()
         {
-            try
+            CanRefreshRecentlyAdded = false;
+
+            await Task.Run(() =>
             {
-                RefreshRecentlyAdded();
-            }
-            catch (Exception e)
-            {
-                MessageBoxFactory.ShowError(e);
-            }
+                try
+                {
+                    var result = RefreshRecentlyAdded();
+
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        LoadFromContext();
+                        CanRefreshRecentlyAdded = true;
+                    });
+                }
+                catch (Exception e)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBoxFactory.ShowError(e);
+                        CanRefreshRecentlyAdded = true;
+                    });
+                }
+            });
         }
 
 
@@ -195,6 +223,7 @@ namespace PrimeTracker
 
         private void InitializeWatchlist()
         {
+          
             SortDescription SortTitle = new SortDescription("Title", ListSortDirection.Ascending);
 
             cvsMovies = new CollectionViewSource
@@ -224,6 +253,26 @@ namespace PrimeTracker
                 return ((Video)obj).IsExpired;
             else
                 return true;
+        }
+
+        public bool CanRefreshWatchList
+        {
+            get { return Get<bool>(); }
+            set
+            {
+                Set(value);
+                RaisePropertyChanged();
+            }
+        }
+
+        public bool CanRefreshRecentlyAdded
+        {
+            get { return Get<bool>(); }
+            set
+            {
+                Set(value);
+                RaisePropertyChanged();
+            }
         }
 
         public bool ExpiredOnly
@@ -278,11 +327,39 @@ namespace PrimeTracker
         {
             get
             {
-                return new CommandHelper(RefreshWatchlistItems);
+                return new CommandHelper(RefreshWatchlistItemsAsync);
             }
         }
 
-        public void RefreshWatchlistItems()
+        private async void RefreshWatchlistItemsAsync()
+        {
+            CanRefreshWatchList = false;
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                //TODO: Disable Button
+                RefreshWatchlistItems(false);
+
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        LoadFromContext();
+                        CanRefreshWatchList = true;
+                    });
+                }
+                catch (Exception e)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBoxFactory.ShowError(e);
+                        CanRefreshWatchList = true;
+                    });
+                }
+            });
+        }
+
+        public void RefreshWatchlistItems(bool reload)
         {
             List<int> currentIds = new List<int>();
 
@@ -332,8 +409,6 @@ namespace PrimeTracker
             }
 
             DataStore.UpdateWatchlistIds(currentIds);
-
-            LoadFromContext();
         }
 
         #endregion
@@ -345,6 +420,7 @@ namespace PrimeTracker
                 return new CommandHelper(ShowSettings);
             }
         }
+
 
         private void ShowSettings()
         {
@@ -363,9 +439,9 @@ namespace PrimeTracker
             DateTime runTime = DateTime.Now;
 
 
-            var watchListTag = TagRecord.Create(originai.Id.HasValue? originai.Id.Value : -1, TagTypes.WatchList);
+            var watchListTag = TagRecord.Create(originai.Id.HasValue ? originai.Id.Value : -1, TagTypes.WatchList);
 
-            
+
             if (updated == null)
             {
                 originai.Created = originai.Updated = runTime;
@@ -379,7 +455,7 @@ namespace PrimeTracker
 
                 if (updated.Tags != null)
                 {
-                    foreach (var t in updated.Tags)
+                    foreach (var t in updated.Tags.Values)
                     {
                         originai.AddTag(t);
                     }

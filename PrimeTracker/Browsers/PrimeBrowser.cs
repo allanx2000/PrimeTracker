@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -76,57 +77,50 @@ namespace PrimeTracker.Browsers
 
             try
             {
-                try
-                {
-                    driver.FindElementByLinkText("Start here.");
-                }
-                catch (Exception e)
-                {
-                    LoggedIn = true;
-                    return;
-                }
-
-                //TODO: Need another check for already loogined in
-                var toggleButton = driver.FindElementById("nav-signin-tooltip");
-                var link = toggleButton.FindElement(By.TagName("a"));
-                link.Click();
-
-                var form = driver.FindElementByName("signIn");
-
-                var inputs = form.FindElements(By.TagName("input"));
-
-                List<string> ids = new List<string>();
-
-                foreach (var input in inputs)
-                {
-                    string name = input.GetAttribute("name");
-
-                    switch (name)
-                    {
-                        case "email":
-                            input.Click();
-                            input.SendKeys(AppContext.Settings.Username);
-                            break;
-                        case "password":
-                            input.Click();
-                            input.SendKeys(AppContext.Settings.Password);
-                            break;
-                        case "rememberMe":
-                            input.Click();
-                            break;
-                    }
-                    ids.Add(name);
-                }
-
-                var signInButton = form.FindElement(By.Id("signInSubmit"));
-                signInButton.Click();
-
-                LoggedIn = true;
+                driver.FindElementByLinkText("Start here.");
             }
             catch (Exception e)
             {
-                //Already logged in
+                LoggedIn = true;
+                return;
             }
+
+            //TODO: Need another check for already loogined in
+            var toggleButton = driver.FindElementById("nav-signin-tooltip");
+            var link = toggleButton.FindElement(By.TagName("a"));
+            link.Click();
+
+            var form = driver.FindElementByName("signIn");
+
+            var inputs = form.FindElements(By.TagName("input"));
+
+            List<string> ids = new List<string>();
+
+            foreach (var input in inputs)
+            {
+                string name = input.GetAttribute("name");
+
+                switch (name)
+                {
+                    case "email":
+                        input.Click();
+                        input.SendKeys(AppContext.Settings.Username);
+                        break;
+                    case "password":
+                        input.Click();
+                        input.SendKeys(AppContext.Settings.Password);
+                        break;
+                    case "rememberMe":
+                        input.Click();
+                        break;
+                }
+                ids.Add(name);
+            }
+
+            var signInButton = form.FindElement(By.Id("signInSubmit"));
+            signInButton.Click();
+
+            LoggedIn = true;
         }
 
         //TODO: Turn into Enum
@@ -155,7 +149,17 @@ namespace PrimeTracker.Browsers
             driver.Navigate().GoToUrl(AmazonBaseUrl + "s/ref=nb_sb_noss?url=search-alias%3Dinstant-video");
 
             FindAndGotoLink("Movies");
-            FindAndGotoLink("Included with Prime");
+
+            try
+            {
+                FindAndGotoLink("Included with Prime");
+            }
+            catch (Exception e)
+            {
+                var el = driver.FindElementByLinkText("Included with Prime");
+                el.Click();
+            }
+
             FindAndGotoLink(days);
             FindRatingLink(4);
 
@@ -179,7 +183,7 @@ namespace PrimeTracker.Browsers
             }
             catch (Exception e)
             {
-                ParseVideosV2(videos, type);                
+                ParseVideosV2(videos, type);
             }
 
 
@@ -199,7 +203,7 @@ namespace PrimeTracker.Browsers
 
                     if (link.Contains("/dp/"))
                     {
-                        
+
                         string id = ExtractAmazonIdFromLink(link);
                         string title = a.Text.Trim();
 
@@ -285,7 +289,7 @@ namespace PrimeTracker.Browsers
             return id;
         }
 
-        
+
         private void FindAndClickSpan(string text)
         {
             SafeExecutor.ExecuteAction(() =>
@@ -385,7 +389,7 @@ namespace PrimeTracker.Browsers
         {
             if (!LoggedIn)
                 Login();
-
+            
             //AmazonId, Video
             Dictionary<string, Video> videos = new Dictionary<string, Video>();
 
@@ -398,6 +402,9 @@ namespace PrimeTracker.Browsers
                 bool added = false;
                 string url = CreateWatchListPath(type, ctr++, false);
                 driver.Navigate().GoToUrl(url);
+
+                if (!driver.PageSource.Contains("Your Lists"))
+                    throw new Exception("Not logged in.");
 
                 foreach (var l in driver.FindElementsByTagName("a"))
                 {

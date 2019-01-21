@@ -10,14 +10,17 @@ using System.Windows.Media;
 namespace PrimeTracker.Models
 {
     [Table("videos")]
-    public class Video
+    public class Video : Innouvous.Utils.Merged45.MVVM45.ViewModel
     {
+        public Video()
+        {
+            Tags = new Dictionary<TagTypes, TagRecord>();
+        }
 
         public SolidColorBrush TitleColor
         {
             get {
-
-                var tm = TagMap;
+                var tm = Tags;
 
                 if (IsExpired)
                     return ColorBrushes.LightGray;
@@ -60,20 +63,22 @@ namespace PrimeTracker.Models
         [Required]
         public DateTime Updated { get; set; }
 
-        public virtual ICollection<TagRecord> Tags { get; set; }
+        public Dictionary<TagTypes, TagRecord> Tags
+        {
+            get; set;
+        }
 
-        public Dictionary<TagTypes, TagRecord> TagMap
+        internal void RemoveTag(TagTypes type)
+        {
+            if (Tags.ContainsKey(type))
+                Tags.Remove(type);
+        }
+
+        public bool IsNew
         {
             get
             {
-                var dict = new Dictionary<TagTypes, TagRecord>();
-
-                foreach (var t in Tags)
-                {
-                    dict[t.Value] = t;
-                }
-
-                return dict;
+                return Tags.ContainsKey(TagTypes.New);
             }
         }
 
@@ -81,7 +86,7 @@ namespace PrimeTracker.Models
         {
             get
             {
-                return Tags != null && Tags.Count(x => x.Value == TagTypes.Expired) > 0;
+                return Tags.ContainsKey(TagTypes.Expired);
             }
         }
 
@@ -89,20 +94,11 @@ namespace PrimeTracker.Models
         {
             return Title + " (" + AmazonId + ")";
         }
-
         
         internal void AddTag(TagRecord tag)
         {
-            if (Tags == null)
-            {
-                Tags = new List<TagRecord>();
-                Tags.Add(tag);
-            }
-            else if ((from t in Tags where t.Value == tag.Value select t).Count() == 0)
-            {
-                Tags.Add(tag);
+            if (!Tags.ContainsKey(tag.Value))
+                Tags.Add(tag.Value, tag);
             }
         }
     }
-
-}
