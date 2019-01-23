@@ -12,7 +12,7 @@ namespace PrimeTracker.Dao
         Video GetVideoByAmazonId(string amazonId);
         Video InsertVideo(Video v);
         void UpdateVideo(Video existing);
-        List<Video> GetVideosByTag(TagTypes tag);
+        List<Video> GetVideosByTag(TagType tag);
 
         /// <summary>
         /// Removes Watchlist tag for all videos not in currentIds

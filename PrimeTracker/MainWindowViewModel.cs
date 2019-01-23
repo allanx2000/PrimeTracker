@@ -69,7 +69,7 @@ namespace PrimeTracker
             {
                 Process.Start(video.Url);
 
-                video.RemoveTag(TagTypes.New);
+                video.RemoveTag(TagType.New);
                 AppContext.Instance.DataStore.UpdateVideo(video);
             }
         }
@@ -102,7 +102,7 @@ namespace PrimeTracker
                 if (existing == null)
                 {
                     v.Created = v.Updated = runTime;
-                    v.AddTag(TagRecord.Create(-1, TagTypes.New));
+                    v.AddTag(TagRecord.Create(-1, TagType.New));
 
                     if ((from i in added
                          where i.AmazonId == v.AmazonId || i.Title == v.Title
@@ -196,6 +196,7 @@ namespace PrimeTracker
 
                     App.Current.Dispatcher.Invoke(() =>
                     {
+                        ShowRefreshStatus(result);
                         LoadFromContext();
                         CanRefreshRecentlyAdded = true;
                     });
@@ -209,6 +210,11 @@ namespace PrimeTracker
                     });
                 }
             });
+        }
+
+        private void ShowRefreshStatus(RefreshResults result, string title = "Refreshed")
+        {
+            MessageBoxFactory.ShowInfo(mainWindow, result.GetSummary(), title);
         }
 
 
@@ -298,7 +304,7 @@ namespace PrimeTracker
             shows.Clear();
             movies.Clear();
 
-            foreach (var video in DataStore.GetVideosByTag(TagTypes.WatchList))
+            foreach (var video in DataStore.GetVideosByTag(TagType.WatchList))
             {
 
                 switch (video.Type)
@@ -439,7 +445,7 @@ namespace PrimeTracker
             DateTime runTime = DateTime.Now;
 
 
-            var watchListTag = TagRecord.Create(originai.Id.HasValue ? originai.Id.Value : -1, TagTypes.WatchList);
+            var watchListTag = TagRecord.Create(originai.Id.HasValue ? originai.Id.Value : -1, TagType.WatchList);
 
 
             if (updated == null)

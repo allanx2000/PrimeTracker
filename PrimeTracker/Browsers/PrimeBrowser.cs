@@ -321,6 +321,7 @@ namespace PrimeTracker.Browsers
                 catch (Exception e)
                 {
                     el = el.FindElement(By.XPath("./.."));
+                    el.Click();
                 }
                 // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
             }
@@ -465,7 +466,7 @@ namespace PrimeTracker.Browsers
             foreach (var ex in expired)
             {
                 var v = videos[ex];
-                v.AddTag(TagRecord.Create(-1, TagTypes.Expired));
+                v.AddTag(TagRecord.Create(-1, TagType.Expired));
             }
 
             return videos.Values.ToList();

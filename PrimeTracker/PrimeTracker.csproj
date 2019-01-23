@@ -96,6 +96,8 @@
     <Compile Include="Browsers\SafeExecutor.cs" />
     <Compile Include="Dao\IDataStore.cs" />
     <Compile Include="Dao\SQLiteStore.cs" />
+    <Compile Include="Models\RatingRecord.cs" />
+    <Compile Include="Models\RatingType.cs" />
     <Compile Include="RefreshResults.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
@@ -124,7 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainWindowViewModel.cs" />
-    <Compile Include="Models\TagTypes.cs" />
+    <Compile Include="Models\TagType.cs" />
     <Compile Include="Models\TagRecord.cs" />
     <Compile Include="Models\Series.cs" />
     <Compile Include="Models\Video.cs" />
@@ -164,6 +166,9 @@
     <Resource Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="TableScripts\CreateRatingsTable.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Content Include="TableScripts\CreateVideosTable.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

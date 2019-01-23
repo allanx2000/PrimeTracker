@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PrimeTracker.Models
 {
-    public enum TagTypes
+    public enum TagType
     {
         New = 1,
         WatchList,

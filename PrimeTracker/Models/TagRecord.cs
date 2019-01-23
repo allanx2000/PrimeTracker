@@ -8,11 +8,12 @@ namespace PrimeTracker.Models
     {
         public int VideoId { get; set; }
 
-        public TagTypes Value { get; set; }
+        public TagType Value { get; set; }
 
+        //TODO: Remove, not needed since new one will always bet inserted
         public DateTime Added { get; set; }
 
-        internal static TagRecord Create(int videoId, TagTypes value)
+        internal static TagRecord Create(int videoId, TagType value)
         {
             TagRecord tr = new TagRecord()
             {

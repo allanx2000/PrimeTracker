@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 
 namespace PrimeTracker.Models
@@ -14,43 +15,77 @@ namespace PrimeTracker.Models
     {
         public Video()
         {
-            Tags = new Dictionary<TagTypes, TagRecord>();
+            Tags = new Dictionary<TagType, TagRecord>();
+            Ratings = new Dictionary<RatingType, RatingRecord>();
         }
 
-        public SolidColorBrush TitleColor
-        {
-            get {
-                var tm = Tags;
-
-                if (IsExpired)
-                    return ColorBrushes.LightGray;
-                //else if (tm.ContainsKey(TagTypes.New))
-                //    return ColorBrushes.DarkOrange;
-                else
-                    return ColorBrushes.Black; 
-            }
-        }
+        #region ViewModel
 
         public string CreateDateString
         {
             get { return Created.ToShortDateString() + " " + Created.ToShortTimeString(); }
         }
 
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public FontWeight TitleWeight
+        {
+            get { return IsNew ? FontWeights.Bold : FontWeights.Normal; }
+        }
+
+        public SolidColorBrush TitleColor
+        {
+            get
+            {
+                var tm = Tags;
+
+                if (IsExpired)
+                    return ColorBrushes.LightGray;
+                else if (IsNew)
+                    return ColorBrushes.DarkOrange;
+                else
+                    return ColorBrushes.Black;
+            }
+        }
+
+        public bool IsNew
+        {
+            get
+            {
+                return Tags.ContainsKey(TagType.New);
+            }
+        }
+
+        public bool IsExpired
+        {
+            get
+            {
+                return Tags.ContainsKey(TagType.Expired);
+            }
+        }
+
+        public override void RefreshViewModel()
+        {
+            RaisePropertyChanged("IsExpired");
+            RaisePropertyChanged("IsNew");
+            RaisePropertyChanged("TitleColor");
+            //TODO: RatingsString?
+        }
+
+        #endregion
+
         public int? Id { get; set; }
 
-        [Required, Index("IX_AmazonId", IsUnique = true)]
         public string AmazonId { get; set; }
 
-        [Required, Index("IX_VideoName", IsUnique = true)]
         public string Title { get; set; }
 
         [Required]
         public VideoType Type { get; set; }
 
+        /*
         public double ImdbRating { get; set; }
         public double AmazonRating { get; set; }
         public int MyRating { get; set; }
+        */
 
         [Required]
         public string Url { get; set; }
@@ -63,30 +98,18 @@ namespace PrimeTracker.Models
         [Required]
         public DateTime Updated { get; set; }
 
-        public Dictionary<TagTypes, TagRecord> Tags
+        public Dictionary<TagType, TagRecord> Tags
         {
             get; set;
         }
+        public Dictionary<RatingType, RatingRecord> Ratings { get; internal set; }
 
-        internal void RemoveTag(TagTypes type)
+        internal void RemoveTag(TagType type)
         {
             if (Tags.ContainsKey(type))
+            {
                 Tags.Remove(type);
-        }
-
-        public bool IsNew
-        {
-            get
-            {
-                return Tags.ContainsKey(TagTypes.New);
-            }
-        }
-
-        public bool IsExpired
-        {
-            get
-            {
-                return Tags.ContainsKey(TagTypes.Expired);
+                RefreshViewModel();
             }
         }
 
@@ -94,11 +117,32 @@ namespace PrimeTracker.Models
         {
             return Title + " (" + AmazonId + ")";
         }
-        
+
+        internal void AddRating(RatingRecord rating)
+        {
+            if (!Ratings.ContainsKey(rating.Type))
+            {
+                Ratings.Add(rating.Type, rating);
+                RefreshViewModel();
+            }
+        }
+
+        internal void RemoveRating(RatingType type)
+        {
+            if (Ratings.ContainsKey(type))
+            {
+                Ratings.Remove(type);
+                RefreshViewModel();
+            }
+        }
+
         internal void AddTag(TagRecord tag)
         {
             if (!Tags.ContainsKey(tag.Value))
+            {
                 Tags.Add(tag.Value, tag);
+                RefreshViewModel();
             }
         }
     }
+}
