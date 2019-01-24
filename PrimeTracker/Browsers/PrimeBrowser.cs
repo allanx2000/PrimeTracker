@@ -13,6 +13,7 @@ namespace PrimeTracker.Browsers
     {
         private const string AmazonBaseUrl = "https://www.amazon.com/";
         private readonly string GP_VIDEO_DETAILS = "/gp/video/detail/";
+        private readonly MainWindow mainWindow;
 
         /*
 * https://www.amazon.com/gp/video/detail/B07MBP7DTG/ref=atv_wtlp_wtl_4
@@ -36,8 +37,9 @@ namespace PrimeTracker.Browsers
         public bool LoggedIn { get; private set; }
 
 
-        public PrimeBrowser()
+        public PrimeBrowser(MainWindow mainWindow)
         {
+            this.mainWindow = mainWindow;
             LoadBrowser();
         }
 
@@ -317,7 +319,7 @@ namespace PrimeTracker.Browsers
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBoxFactory.ShowError($"Click the {text} checkbox", "Manual Click");
+                    MessageBoxFactory.ShowError($"Click the {text} checkbox", "Manual Click", owner: mainWindow);
                 });
             }
         }

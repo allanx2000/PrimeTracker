@@ -25,7 +25,7 @@ namespace PrimeTracker
             get
             {
                 if (browser == null)
-                    browser = new PrimeBrowser();
+                    browser = new PrimeBrowser(mainWindow);
 
                 return browser;
             }

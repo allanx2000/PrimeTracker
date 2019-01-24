@@ -1,2 +1,1 @@
 ﻿-Abilitiy to export to ThingsDB (app)
--Change IsReshing* to IsUpdating; lock both Refreshes
