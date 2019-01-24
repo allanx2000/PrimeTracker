@@ -32,8 +32,10 @@
             <TextBox Text="{Binding DbPath, UpdateSourceTrigger=PropertyChanged}"/>
         </DockPanel>
 
-        <CheckBox IsChecked="{Binding HideBrowser}" Grid.Row="3" Grid.ColumnSpan="2">Hide Browser</CheckBox>
-
+        <!-- Login/redirect won't work in background
+        <CheckBox IsChecked="{Binding HideBrowser}" 
+        Grid.Row="3" Grid.ColumnSpan="2">Hide Browser</CheckBox>
+        -->
 
         <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2" HorizontalAlignment="Center">
             <Button Width="70" Command="{Binding SetCommand}">Set</Button>

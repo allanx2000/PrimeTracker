@@ -59,7 +59,7 @@
                         </ListBox>
                     </GroupBox>
 
-                    <StackPanel IsEnabled="{Binding CanRefreshWatchList}" HorizontalAlignment="Center" Grid.Row="2" Orientation="Horizontal">
+                    <StackPanel IsEnabled="{Binding IsRefreshing}" HorizontalAlignment="Center" Grid.Row="2" Orientation="Horizontal">
                         <CheckBox IsChecked="{Binding ExpiredOnly}">Expired Only</CheckBox>
                         <Button Command="{Binding RefreshWatchlistCommand}">Refresh</Button>
                     </StackPanel>
@@ -77,7 +77,7 @@
                              ItemTemplate="{StaticResource VideoTemplate}">
                     </ListBox>
 
-                    <Button IsEnabled="{Binding CanRefreshRecentlyAdded}" Grid.Row="1" Width="80" Command="{Binding RefreshRecentCommand}">Refresh</Button>
+                    <Button IsEnabled="{Binding IsRefreshing}" Grid.Row="1" Width="80" Command="{Binding RefreshRecentCommand}">Refresh</Button>
                 </Grid>
             </GroupBox>
         </Grid>

@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using Innouvous.Utils;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using PrimeTracker.Models;
@@ -63,6 +59,7 @@ namespace PrimeTracker.Browsers
                 options.AddArgument("headless");
 
             driver = new ChromeDriver(chromeDriverService, options);
+            
         }
 
         internal void Quit()
@@ -161,9 +158,10 @@ namespace PrimeTracker.Browsers
             }
 
             FindAndGotoLink(days);
+
             FindRatingLink(4);
 
-            FindAndClickInput("Movies", 1);
+            FindAndClickCheckbox("Movies", 1);
             FindAndClickSpan("2010 & Newer");
             FindAndClickSpan("2000 - 2009");
             FindAndGotoLink("High Definition [HD]");
@@ -302,39 +300,26 @@ namespace PrimeTracker.Browsers
             }, "Cannot find span: " + text);
         }
 
-        private void FindAndClickInput(string text, int idx)
+        private void FindAndClickCheckbox(string text, int idx)
         {
-            var ln = GetLeftNav(driver);
-
-            var matches = ln.FindElements(By.XPath(".//span[text()='Movies']"));
-
-            var el = idx >= matches.Count ? matches[matches.Count - 1] : matches[idx];
-            //ln.FindElement(By.XPath($".//input[text()='{text}']"));
-
-            for (int i = 0; i < 3; i++)
-            {
-                try
-                {
-                    el.Click();
-                    break;
-                }
-                catch (Exception e)
-                {
-                    el = el.FindElement(By.XPath("./.."));
-                    el.Click();
-                }
-                // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
-            }
-            /*
-            SafeExecutor.ExecuteAction(() =>
+            try
             {
                 var ln = GetLeftNav(driver);
-                var el = ln.FindElement(By.XPath($".//input[text()='{text}', @type='checkbox']"));
 
-                el.Click(); // ln.FindElement(By.LinkText(linkText)).GetAttribute("href");
+                var matches = ln.FindElements(By.XPath(".//span[text()='" + text + "']"));
 
-            }, "Cannot find input: " + text);
-            */
+                var el = idx >= matches.Count ? matches[matches.Count - 1] : matches[idx];
+           
+                el.Click();
+
+            }
+            catch (Exception e)
+            {
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBoxFactory.ShowError($"Click the {text} checkbox", "Manual Click");
+                });
+            }
         }
 
         private void FindRatingLink(int minRating)

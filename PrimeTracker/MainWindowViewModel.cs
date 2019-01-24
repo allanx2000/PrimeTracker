@@ -35,8 +35,7 @@ namespace PrimeTracker
         {
             this.mainWindow = mainWindow;
 
-            CanRefreshRecentlyAdded = true;
-            CanRefreshWatchList = true;
+            IsRefreshing = true;
 
             InitializeWatchlist();
             InitializeRecentlyAdded();
@@ -186,7 +185,7 @@ namespace PrimeTracker
 
         private async void RefreshRecentMoviesAsync()
         {
-            CanRefreshRecentlyAdded = false;
+            IsRefreshing = false;
 
             await Task.Run(() =>
             {
@@ -198,7 +197,7 @@ namespace PrimeTracker
                     {
                         ShowRefreshStatus(result);
                         LoadFromContext();
-                        CanRefreshRecentlyAdded = true;
+                        IsRefreshing = true;
                     });
                 }
                 catch (Exception e)
@@ -206,7 +205,7 @@ namespace PrimeTracker
                     App.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBoxFactory.ShowError(e);
-                        CanRefreshRecentlyAdded = true;
+                        IsRefreshing = true;
                     });
                 }
             });
@@ -261,17 +260,7 @@ namespace PrimeTracker
                 return true;
         }
 
-        public bool CanRefreshWatchList
-        {
-            get { return Get<bool>(); }
-            set
-            {
-                Set(value);
-                RaisePropertyChanged();
-            }
-        }
-
-        public bool CanRefreshRecentlyAdded
+        public bool IsRefreshing
         {
             get { return Get<bool>(); }
             set
@@ -339,7 +328,7 @@ namespace PrimeTracker
 
         private async void RefreshWatchlistItemsAsync()
         {
-            CanRefreshWatchList = false;
+            IsRefreshing = false;
 
             await Task.Run(() =>
             {
@@ -351,7 +340,7 @@ namespace PrimeTracker
                     App.Current.Dispatcher.Invoke(() =>
                     {
                         LoadFromContext();
-                        CanRefreshWatchList = true;
+                        IsRefreshing = true;
                     });
                 }
                 catch (Exception e)
@@ -359,7 +348,7 @@ namespace PrimeTracker
                     App.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBoxFactory.ShowError(e);
-                        CanRefreshWatchList = true;
+                        IsRefreshing = true;
                     });
                 }
             });
