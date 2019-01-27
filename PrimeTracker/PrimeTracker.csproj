@@ -44,20 +44,20 @@
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
-    <Reference Include="Innouvous.Utils.Data.SQLiteWrapper">
-      <HintPath>..\..\RateIt\Libraries\Innouvous.Utils.Data.SQLiteWrapper.dll</HintPath>
+    <Reference Include="Innouvous.Utils.Data.SQLiteWrapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libraries\Innouvous.Utils.Data.SQLiteWrapper.dll</HintPath>
     </Reference>
-    <Reference Include="innouvous.Utils.Merged">
-      <HintPath>E:\Projects\Visual Studio\RateIt\Libraries\innouvous.Utils.Merged.dll</HintPath>
+    <Reference Include="innouvous.Utils.Merged, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libraries\innouvous.Utils.Merged.dll</HintPath>
     </Reference>
-    <Reference Include="Innouvous.Utils.Merged45">
-      <HintPath>E:\Projects\Visual Studio\RateIt\Libraries\Innouvous.Utils.Merged45.dll</HintPath>
+    <Reference Include="Innouvous.Utils.Merged45, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libraries\Innouvous.Utils.Merged45.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="SQLite.CodeFirst, Version=1.5.1.25, Culture=neutral, PublicKeyToken=eb96ba0a78d831a7, processorArchitecture=MSIL">
-      <HintPath>..\packages\SQLite.CodeFirst.1.5.1.25\lib\net45\SQLite.CodeFirst.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -156,7 +156,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="ReadMe.md" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

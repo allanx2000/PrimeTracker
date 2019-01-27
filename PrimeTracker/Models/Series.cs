@@ -8,13 +8,12 @@ using System.Threading.Tasks;
 
 namespace PrimeTracker.Models
 {
-    [Table("tv_series")]
+    //[Table("tv_series")]
     class Series
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int? Id { get; set; }
 
-        [Required, Index("IX_SeriesName", IsUnique = true)]
+        //Required
         public string Name { get; set; }
 
         public List<Video> Seasons { get; set; }
